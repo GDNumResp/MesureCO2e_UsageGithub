@@ -114,6 +114,7 @@ wb.remove(wb.active)
 wsS = sheet('Synthèse', NAVY)
 wsE = sheet('Empreinte', NAVY)
 wsC = sheet('Calcul', '737885')
+wsX = sheet('Démonstration', '737885')
 wsK = sheet('Contrôles', '737885')
 wsM = sheet('Méthodologie', 'C9CCD4')
 wsD = sheet('Données', 'D99A00')
@@ -265,7 +266,7 @@ def dcol(n): return f"'Données'!${COL[n]}:${COL[n]}"
 for nm, c in [('D_Date', 'date'), ('D_Prod', 'product'), ('D_I', 'input'), ('D_O', 'output'), ('D_CR', 'cache_read'), ('D_CW', 'cache_write'),
               ('D_Mod', 'Modele'), ('D_Jour', 'Jour'), ('D_Cle', 'Modele_cle'), ('D_Grp', 'Groupe'), ('D_TO', 'T_O'), ('D_kWh', 'Energie_kWh'),
               ('D_CO2', 'CO2e_kg'), ('D_Brut', 'Montant_brut'), ('D_An', 'Annee'), ('D_Mois', 'Mois'), ('D_C2', 'C2_cache_sup_input'),
-              ('D_C4F', 'C4_input_frais_negatif'), ('D_C4CW', 'C4_CW_sans_tarif')]:
+              ('D_C4F', 'C4_input_frais_negatif'), ('D_C4CW', 'C4_CW_sans_tarif'), ('D_Lig', 'Ligne'), ('D_F', 'F_input_frais')]:
     name(nm, dcol(c))
 
 # ---------- Calcul ----------
@@ -574,6 +575,132 @@ def color_series(s, hexc, line=False, width=22000, dash=None):
         s.graphicalProperties.line.solidFill = 'FFFFFF'
         s.graphicalProperties.line.width = 6350
 
+# ---------- Démonstration ----------
+# Pour une ligne de la table des modèles et l'année choisie : chaque formule écrite avec les symboles, puis avec les valeurs.
+# Les calculs intermédiaires sont dans Interne (colonnes N:O).
+def sup(x):
+    """Exposant en caractères Unicode (⁻⁶) à partir d'un entier."""
+    s = f'""&{x}'
+    for a, b in zip('-0123456789', '⁻⁰¹²³⁴⁵⁶⁷⁸⁹'):
+        s = f'SUBSTITUTE({s},"{a}","{b}")'
+    return s
+def tnum(x):  # nombre court (prix, rapports, PUE, mix) : séparateur décimal de la langue d'Excel
+    return f'(""&ROUND({x},6))'
+def tsci(x):  # notation scientifique : 1,06 × 10⁻⁶
+    e = f'INT(LOG10({x})+1E-12)'
+    return f'IF(N({x})<=0,"0",ROUND({x}/10^{e},4)&" × 10"&{sup(e)})'
+def ttok(x): return f'FIXED({x},0)'
+XS = 'D_Lig,X_Row,D_An,S_An'
+XH = [
+    ('X_Row', 'Ligne de la table Calcul', '=IFERROR(MATCH(X_Sel,M_Nom,0),"")'),
+    ('X_Base', 'Modèle sans « [ancien tarif] »', '=SUBSTITUTE(X_Sel," [ancien tarif]","")'),
+    ('X_N', 'Lignes de l\'année', f'=IF(X_Row="",0,COUNTIFS({XS}))'),
+    ('X_I', 'Σ input', f'=IF(X_Row="",0,SUMIFS(D_I,{XS}))'),
+    ('X_CR', 'Σ cache read', f'=IF(X_Row="",0,SUMIFS(D_CR,{XS}))'),
+    ('X_CW', 'Σ cache write', f'=IF(X_Row="",0,SUMIFS(D_CW,{XS}))'),
+    ('X_O', 'Σ output', f'=IF(X_Row="",0,SUMIFS(D_O,{XS}))'),
+    ('X_F', 'Σ input frais', f'=IF(X_Row="",0,SUMIFS(D_F,{XS}))'),
+    ('X_TO', 'Σ T_O', f'=IF(X_Row="",0,SUMIFS(D_TO,{XS}))'),
+    ('X_kWh', 'Σ énergie (kWh)', f'=IF(X_Row="",0,SUMIFS(D_kWh,{XS}))'),
+    ('X_CO2', 'Σ CO₂e (kg)', f'=IF(X_Row="",0,SUMIFS(D_CO2,{XS}))'),
+    ('X_Neg', 'Lignes C4 (input frais < 0)', f'=IF(X_Row="",0,COUNTIFS({XS},D_C4F,1))'),
+    ('X_Grp', 'CO₂e du modèle, tous tarifs (kg)', '=IF(X_Row="",0,SUMIFS(D_CO2,D_Grp,X_Base,D_An,S_An))'),
+]
+for k in ['Delta', 'Eps', 'PI', 'PCR', 'PCW', 'PO', 'sI', 'sCR', 'sCW', 'eO', 'PUE', 'Fab', 'FE', 'Src', 'Conv', 'Orig', 'Scen', 'Stat', 'Fam']:
+    XH.append((f'X_{k}', f'Calcul : {k}', f'=IF(X_Row="","",INDEX(M_{k},X_Row))'))
+XH.append(('X_C2', 'C2 : lignes cache > input', f"=IF(X_Row=\"\",0,INDEX('Contrôles'!$J${K0}:$J${K1},X_Row))"))
+XH.append(('X_FamSrc', 'Source de la convention de la famille', '=IFERROR(INDEX(F_Src,MATCH(X_Fam,F_Fam,0)),"")'))
+name('F_Src', 'Calcul!$I$7:$I$14')
+cellv(wsI, 'N2', 'Démonstration', font=f(10, True))
+for i, (nm, lab, fm) in enumerate(XH):
+    r = 3 + i
+    cellv(wsI, f'N{r}', lab, font=f(9)); cellv(wsI, f'O{r}', fm, font=f(9))
+    name(nm, f'Interne!$O${r}')
+setw(wsI, {'N': 34, 'O': 18})
+
+title(wsX, 'Démonstration', "Pour un modèle, chaque étape du calcul sur les lignes réelles de l'année choisie : la formule, puis la même formule avec les valeurs, jusqu'au CO₂e.")
+setw(wsX, {'B': 24, 'C': 104, 'D': 18, 'E': 15})
+MATH = Font(name='Cambria', size=11, color=INK)
+MATHV = Font(name='Cambria', size=11, color=INK2)
+section(wsX, 'B5', 'Périmètre', 4)
+cellv(wsX, 'B6', 'Modèle', font=f(10, True))
+inp(wsX, 'C6', '=INDEX(I_Top,1)'); wsX['C6'].alignment = Alignment(horizontal='left')
+name('X_Sel', 'Démonstration!$C$6')
+dv = DataValidation(type='list', formula1='=M_Nom', allow_blank=True); wsX.add_data_validation(dv); dv.add('C6')
+note(wsX, 'D6', "← choisissez une ligne de la table Calcul (par défaut : le premier émetteur de l'année)")
+cellv(wsX, 'B7', 'Année', font=f(10, True)); cellv(wsX, 'C7', '=S_An', '0', align=Alignment(horizontal='left'))
+note(wsX, 'D7', "← choisie dans Synthèse (cellule C6)")
+cellv(wsX, 'B8', 'Lignes d\'usage réel', font=f(10, True)); cellv(wsX, 'C8', '=X_N', F_INT, align=Alignment(horizontal='left'))
+para(wsX, 9, 2, '=IF(X_Row="","Choisissez dans la cellule jaune un modèle de la table Calcul.","Modèle « "&X_Sel&" », année "&S_An&" : "&FIXED(X_N,0)&" lignes d\'usage réel, sans projection. Les lignes « Auto: X » sont comptées avec X, comme dans tout le classeur.")', 4, 18, 10, INK2)
+para(wsX, 10, 2, "Chaque formule s'applique à chaque ligne ℓ de l'onglet Données (colonnes bleues). Les formules sont linéaires et les paramètres constants pour une ligne de la table Calcul : on les applique donc aux sommes des lignes. Valeurs arrondies à l'affichage, calculs en pleine précision.", 4, 30, 9, MUTED)
+
+xr = 12
+def xstep(no, t, why=None):
+    global xr
+    xr += 1
+    section(wsX, f'B{xr}', f'{no:02d} · {t}', 4); xr += 1
+    if why: para(wsX, xr, 2, why, 4, 30, 9, INK2); xr += 1
+def xrow(sym, txt, val=None, fmt=None, unit=None, vtxt=False, h=None):
+    """Une ligne : symbole (B), formule ou valeurs (C), résultat (D) et unité (E)."""
+    global xr
+    if sym: cellv(wsX, f'B{xr}', sym, font=Font(name='Cambria', size=12, bold=True, color=INK), align=Alignment(horizontal='right', vertical='center', indent=1))
+    c = cellv(wsX, f'C{xr}', txt, font=MATHV if vtxt else MATH, align=Alignment(wrap_text=True, vertical='center'))
+    if txt.startswith('= '): c.data_type = 's'  # formule écrite (texte), pas une formule Excel
+    if val is not None: cellv(wsX, f'D{xr}', val, fmt, f(11, True, NAVY), align=Alignment(horizontal='right', vertical='center'))
+    if unit: cellv(wsX, f'E{xr}', unit, font=f(9, color=MUTED), align=Alignment(vertical='center'))
+    if h: wsX.row_dimensions[xr].height = h
+    xr += 1
+def xnote(fm):
+    global xr
+    para(wsX, xr, 2, fm, 4, 26, 9, '946000'); xr += 1
+G = lambda x: f'=IF(X_Row="","",{x})'
+
+xstep(1, 'Volumes de tokens', "Somme, sur les lignes ℓ de cette ligne de la table et de l'année, des colonnes input, cache_read, cache_write et output de l'export.")
+for s, col, nm in [('I', 'input', 'X_I'), ('CR', 'cache_read', 'X_CR'), ('CW', 'cache_write', 'X_CW'), ('O', 'output', 'X_O')]:
+    xrow(s, f'= Σℓ {s}ℓ   (colonne {col})', G(nm), F_INT, 'tokens')
+
+xstep(2, 'Convention de comptage du cache', "δ vaut 1 si l'input de l'export contient déjà le cache lu (CR), ε vaut 1 s'il contient déjà le cache écrit (CW).")
+xrow('Convention', G('X_Conv&" (origine : "&X_Orig&")"'))
+xrow('', G('IF(X_Orig="C2","Contrôle C2 : "&FIXED(X_C2,0)&" ligne(s) de l\'export vérifient CR + CW − I > 0, impossible si l\'input contient déjà le cache : CR + CW − I > 0 ⇒ δ = ε = 0.",IF(X_Orig="C3","Contrôle C3 : pour la famille "&X_Fam&", le montant facturé retrouve le coût théorique de cette convention (R = M / C entre 0,90 et 1,00).",IF(X_Orig="Forcée","Convention forcée dans l\'onglet Calcul.","Aucun contrôle n\'a tranché : convention documentée par le fournisseur ("&X_FamSrc&").")))'), vtxt=True, h=30)
+xrow('δ', '1 si I contient CR, sinon 0', G('X_Delta'), '0')
+xrow('ε', '1 si I contient CW, sinon 0', G('X_Eps'), '0')
+
+xstep(3, 'Input frais', "Tokens d'entrée réellement traités hors cache : on retire de l'input la part du cache qu'il contient déjà.")
+xrow('F', '= max(0 ; I − δ·CR − ε·CW)')
+xrow('', G(f'"= max(0 ; "&{ttok("X_I")}&" − "&X_Delta&" × "&{ttok("X_CR")}&" − "&X_Eps&" × "&{ttok("X_CW")}&")"'), G('X_F'), F_INT, 'tokens', True)
+xnote('=IF(N(X_Neg)>0,"⚠ "&FIXED(X_Neg,0)&" ligne(s) donnent I − δ·CR − ε·CW < 0, ramené à 0 ligne par ligne (contrôle C4) : le total n\'est pas la formule appliquée aux sommes, et la convention ne convient pas à ces lignes.","")')
+
+xstep(4, 'Rapports de prix', "Chaque type de token est ramené à un token de sortie selon le rapport de son prix P au prix de l'output P_O (grille GitHub du 20/10/2026, palier standard, $ par million de tokens, ligne choisie de la table Calcul).")
+nopr = '"rapport générique (modèle sans tarif dans la table)"'
+xrow('s_I', G(f'IF(N(X_PO)>0,"= P_I / P_O = "&{tnum("X_PI")}&" / "&{tnum("X_PO")},{nopr})'), G('X_sI'), 'General')
+xrow('s_CR', G(f'IF(N(X_PO)>0,"= P_CR / P_O = "&{tnum("X_PCR")}&" / "&{tnum("X_PO")},{nopr})'), G('X_sCR'), 'General')
+xrow('s_CW', G(f'IF(N(X_PO)=0,{nopr},IF(X_PCW="","= s_I   (cache write non facturé par la grille)","= P_CW / P_O = "&{tnum("X_PCW")}&" / "&{tnum("X_PO")}))'), G('X_sCW'), 'General')
+
+xstep(5, 'Tokens équivalent output', "Input frais et cache pondérés par leurs rapports de prix, plus l'output.")
+xrow('T_O', '= F·s_I + CR·s_CR + CW·s_CW + O')
+xrow('', G(f'"= "&{ttok("X_F")}&" × "&{tnum("X_sI")}&" + "&{ttok("X_CR")}&" × "&{tnum("X_sCR")}&" + "&{ttok("X_CW")}&" × "&{tnum("X_sCW")}&" + "&{ttok("X_O")}'), G('X_TO'), F_INT, 'tokens', True, 30)
+
+xstep(6, 'Énergie', None)
+para(wsX, xr - 0, 2, '=IF(X_Row="","","e_O : énergie par token généré (GPU et serveur, Wh/token), scénario EcoLogits « "&X_Scen&" » du Calculateur de Boris. PUE : efficacité du datacenter. La division par 1 000 convertit les Wh en kWh. L\'énergie n\'entre dans le CO₂e que lorsque FE_token vient du Calculateur de Boris.")', 4, 30, 9, INK2); xr += 1
+xrow('E', '= T_O × e_O × PUE / 1000')
+xrow('', G(f'"= "&{ttok("X_TO")}&" × "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" / 1000"'), G('X_kWh'), '#,##0.00', 'kWh', True)
+
+xstep(7, "Facteur d'émission par token", None)
+para(wsX, xr, 2, '=IF(X_Row="","",IF(X_Src="Calculateur de Boris",IF(P_Source="Table fournie","Modèle absent de votre table de facteurs : facteur","Facteur")&" du Calculateur de Boris. FE_mix : mix électrique « "&P_MixNom&" » (gCO₂e/kWh). La division par 10⁶ convertit des Wh × g/kWh en kg"&IF(P_Fab="Oui"," ; fab ajoute la fabrication du matériel par token (kgCO₂e/token).","."),IF(X_Src="Forcé","Valeur forcée dans l\'onglet Calcul, en kgCO₂e par token équivalent output.","Valeur de la table de facteurs fournie ("&IF(X_Stat="H","hypothèse","sourcée")&"), en kgCO₂e par token équivalent output.")))', 4, 30, 9, INK2); xr += 1
+xrow('FE_token', G('IF(X_Src="Calculateur de Boris","= e_O × PUE × FE_mix / 10⁶"&IF(P_Fab="Oui"," + fab",""),"valeur de "&IF(X_Src="Forcé","Calcul (forcée)","la table de facteurs"))'))
+xrow('', G(f'IF(X_Src="Calculateur de Boris","= "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" × "&{tnum("P_Mix")}&" / 10⁶"&IF(P_Fab="Oui"," + "&{tsci("X_Fab")},""),"= "&{tsci("X_FE")})'), G('X_FE'), F_SCI, 'kgCO₂e/token', True)
+
+xstep(8, 'Empreinte carbone', "Tokens équivalent output multipliés par le facteur d'émission par token.")
+xrow('CO₂e', '= T_O × FE_token')
+xrow('', G(f'"= "&{ttok("X_TO")}&" × "&{tsci("X_FE")}'), G('X_CO2'), '#,##0.00', 'kgCO₂e', True)
+
+xr += 1
+section(wsX, f'B{xr}', 'Résultat', 4); xr += 1
+cellv(wsX, f'B{xr}', G(txt_kg('X_CO2')), font=f(18, True, NAVY), align=Alignment(vertical='center'))
+wsX.merge_cells(start_row=xr, start_column=2, end_row=xr, end_column=3); wsX.row_dimensions[xr].height = 30; xr += 1
+para(wsX, xr, 2, '=IF(X_Row="","","Soit "&FIXED(X_CO2,2)&" kgCO₂e et "&FIXED(X_kWh,2)&" kWh pour « "&X_Sel&" » en "&S_An&", sur "&FIXED(X_N,0)&" lignes d\'usage réel."&IF(ABS(X_Grp-X_CO2)>0.000001," Le modèle « "&X_Base&" » a aussi des lignes à un autre tarif : son total de l\'année est "&FIXED(X_CO2,2)&" + "&FIXED(X_Grp-X_CO2,2)&" = "&FIXED(X_Grp,2)&" kgCO₂e, valeur affichée dans l\'onglet Empreinte."," C\'est la valeur du modèle dans l\'onglet Empreinte."))', 4, 30, 10, INK2)
+wsX.freeze_panes = 'A5'
+
 # ---------- Empreinte ----------
 title(wsE, 'Empreinte', None)
 cellv(wsE, 'B3', '="Année "&S_An&" · facteurs : "&P_Source&" · mix "&P_MixNom&IF(S_Cur," · projection au rythme des "&P_N&" derniers jours","")', font=f(10, color=MUTED))
@@ -790,6 +917,7 @@ wsH.cell(r, 2, 'Onglets').font = f(12, True); r += 1
 for t in ["Synthèse : indicateurs clés de l'année, tendance, graphique mensuel, modèles les plus émetteurs, phrases à retenir.",
           "Empreinte : tableau mois par mois (réel et projeté), répartition par modèle, cumul, série quotidienne, classement complet des modèles.",
           "Calcul : formules, réglages globaux et paramètres par modèle (prix, convention, e_O, facteurs).",
+          "Démonstration : pour un modèle, le calcul déroulé étape par étape sur l'année choisie (formule, puis valeurs, jusqu'au CO₂e).",
           "Contrôles : C1 à C6.", "Méthodologie : sources et choix de méthode.", "Données : l'export collé et les colonnes calculées.",
           "Interne et Listes : calculs intermédiaires et listes de choix, à ne pas modifier."]:
     wsH.cell(r, 3, '• ' + t).font = f(10); r += 1
