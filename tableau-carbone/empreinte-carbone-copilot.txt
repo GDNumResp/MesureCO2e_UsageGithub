@@ -199,6 +199,36 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .step{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .step .k{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
 .step .v{font-family:var(--f-display);font-weight:700;font-size:20px}
+/* Démonstration */
+.demo{display:flex;flex-direction:column}
+.dintro{display:flex;flex-direction:column;gap:6px;max-width:90ch;padding-bottom:14px}
+.dstep{display:grid;grid-template-columns:34px minmax(0,1fr);gap:0 14px;padding:18px 0;border-top:1px solid var(--line)}
+.dstep .no{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:4px}
+.dstep .bd{display:flex;flex-direction:column;gap:10px;min-width:0}
+.dstep .why{font-size:13.5px;color:var(--ink-2);max-width:88ch}
+.dstep .dsrc{font-size:12.5px;color:var(--muted);max-width:88ch}
+.dstep .notice{max-width:88ch}
+.eqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px 32px;align-items:start}
+.eqw{display:flex;flex-direction:column;gap:4px;min-width:0}
+.eqw .cap,.eqseg .cap{font-size:12px;color:var(--muted);font-weight:600}
+.eqs>.eqseg,.eqs>.eq1{grid-column:1/-1}
+.eqseg{display:flex;flex-direction:column;gap:4px}
+.eqg,.eq1{font-family:"Cambria Math","STIX Two Math","Latin Modern Math",Cambria,STIXGeneral,"Times New Roman",serif;font-size:18px;line-height:1.7;color:var(--ink)}
+.eqg{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:2px .45em;align-items:center;min-width:0}
+.eqg .l{text-align:right;white-space:nowrap}
+.eqg .r{min-width:0;padding-left:1.15em;text-indent:-1.15em}
+.eqg .op{display:inline-block;min-width:1.15em;color:var(--muted);text-indent:0}
+.eqg sub,.eqg sup,.eq1 sub,.eq1 sup{font-size:.66em;font-style:normal;line-height:0}
+.eqg sup.sg{color:var(--muted)}
+.eqg b{font-weight:700;color:var(--accent)}
+.eqg .u{font-family:var(--f-body);font-size:13px;color:var(--muted);margin-left:.4em}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;vertical-align:middle;margin:0 .12em;line-height:1.3;text-indent:0}
+.frac>span{padding:0 .25em;white-space:nowrap}
+.frac>span+span{border-top:1px solid currentColor}
+.dconc{border:1px solid var(--line-2);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;background:var(--panel-2);margin-top:6px}
+.dconc .v{font-family:var(--f-display);font-weight:700;font-size:34px;color:var(--accent);line-height:1.1}
+.dconc .v span{font-size:18px;color:var(--ink-2);font-weight:500;margin-left:8px}
+@media (max-width:600px){ .dstep{grid-template-columns:minmax(0,1fr)} .eqg,.eq1{font-size:16px} .eqs{grid-template-columns:minmax(0,1fr)} }
 /* Méthodologie */
 .prose{display:flex;flex-direction:column;gap:12px}
 .prose > p,.prose > ul,.prose > ol{max-width:80ch}
@@ -261,7 +291,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:560px){ .filters .flt{width:100%} }
 html[lang=en] [data-lang=fr], html[lang=fr] [data-lang=en]{display:none}
 /* sans import : seuls Calcul et Méthodologie sont consultables, à côté de l'accueil */
-body:not(.has-data) #filtersWrap, body:not(.has-data) .view:not(#v-calcul):not(#v-methodologie), body:not(.has-data) .tabs [data-v=synthese], body:not(.has-data) .tabs [data-v=empreinte], body:not(.has-data) .tabs [data-v=controles], body:not(.has-data) .tabs .n{display:none !important}
+body:not(.has-data) #filtersWrap, body:not(.has-data) .view:not(#v-calcul):not(#v-methodologie), body:not(.has-data) .tabs [data-v=synthese], body:not(.has-data) .tabs [data-v=empreinte], body:not(.has-data) .tabs [data-v=controles], body:not(.has-data) .tabs [data-v=demo], body:not(.has-data) .tabs .n{display:none !important}
 body.has-data .tabs [data-v=accueil], body.browse #emptyState{display:none !important}
 body.has-data #emptyState{display:none}
 .empty-state{padding:40px 24px;text-align:center}
@@ -369,8 +399,9 @@ body.has-data #emptyState{display:none}
     <button role="tab" id="tab-synthese" data-v="synthese" aria-selected="true"><span class="n">1</span>Synthèse</button>
     <button role="tab" id="tab-empreinte" data-v="empreinte" aria-selected="false"><span class="n">2</span>Empreinte</button>
     <button role="tab" id="tab-calcul" data-v="calcul" aria-selected="false"><span class="n">3</span>Calcul</button>
-    <button role="tab" id="tab-controles" data-v="controles" aria-selected="false"><span class="n">4</span>Contrôles <span id="ctlBadge"></span></button>
-    <button role="tab" id="tab-methodologie" data-v="methodologie" aria-selected="false"><span class="n">5</span>Méthodologie</button>
+    <button role="tab" id="tab-demo" data-v="demo" aria-selected="false"><span class="n">4</span>Démonstration</button>
+    <button role="tab" id="tab-controles" data-v="controles" aria-selected="false"><span class="n">5</span>Contrôles <span id="ctlBadge"></span></button>
+    <button role="tab" id="tab-methodologie" data-v="methodologie" aria-selected="false"><span class="n">6</span>Méthodologie</button>
   </nav>
 
   <!-- 1. Empreinte -->
@@ -520,6 +551,14 @@ body.has-data #emptyState{display:none}
       <div class="steps" id="prSteps"></div>
       <div class="t"><h3>Contrôle a posteriori</h3><p class="small muted">Chaque méthode est rejouée sur les mois complets précédents, arrêtée au même jour du mois, puis comparée au total réel. L'ajustement en % n'y est pas appliqué. L'écart aide à choisir la méthode.</p></div>
       <div class="tbl-wrap" id="prBack"></div>
+    </section>
+  </section>
+
+  <!-- Démonstration -->
+  <section class="view" id="v-demo" role="tabpanel" aria-labelledby="tab-demo" hidden>
+    <section class="panel">
+      <div class="panel-head"><div class="t"><h2>Démonstration du calcul</h2><p class="small muted">Pour un modèle, chaque étape du calcul sur les usages réels importés de la période choisie : la formule, puis la même formule avec les valeurs, jusqu'au CO₂e.</p></div><label class="field" style="min-width:220px"><span>Modèle</span><select id="demoModel"></select></label></div>
+      <div class="demo" id="demo"></div>
     </section>
   </section>
 
@@ -958,7 +997,7 @@ const LS2 = "copilot-carbone-params-v4";
 let P = loadParams();
 let DATA = {name:"", sample:false, rows:[], hasGross:false, hasUser:false, issues:{}, rawCount:0};
 let PENDING = null;
-const UI = {metric:"g", dim:"model", view:"chart", cost:"model", preset:"all", tab:"synthese", stepModel:"", period:"year", anchor:"", gran:"day", levSrc:"", levTgt:"", levShare:50};
+const UI = {metric:"g", dim:"model", view:"chart", cost:"model", preset:"all", tab:"synthese", stepModel:"", demoModel:"", period:"year", anchor:"", gran:"day", levSrc:"", levTgt:"", levShare:50};
 function loadParams(){ try{ const s=JSON.parse(localStorage.getItem(LS2)||"null"); if (s && typeof s==="object"){ const o=Object.assign(structuredClone(DEFAULTS2), s); for (const k of ["fx","mp","alias"]) if (!o[k] || typeof o[k]!=="object") o[k]={}; return o; } }catch(e){} return structuredClone(DEFAULTS2); }
 function saveParams(){ try{ localStorage.setItem(LS2, JSON.stringify(P)); }catch(e){} }
 
@@ -1231,15 +1270,15 @@ function renderAll(keepVariants){
   refilter();
 }
 // Les vues sont recalculées à la demande : seule la vue affichée est rendue, les autres le seront à l'ouverture
-const DIRTY={synthese:true, empreinte:true, calcul:true, controles:true, methodologie:true};
+const DIRTY={synthese:true, empreinte:true, calcul:true, demo:true, controles:true, methodologie:true};
 function refilter(){
   dimButtons(); renderChips();
   FROWS = filtered(); const fs=new Set(FROWS); RES = ALL.filter(x=>fs.has(x.r)); RES.negF=ALL.negF; hideTip();
-  renderSource(); DIRTY.synthese=true; DIRTY.empreinte=true; DIRTY.calcul=true; renderVisible();
+  renderSource(); DIRTY.synthese=true; DIRTY.empreinte=true; DIRTY.calcul=true; DIRTY.demo=true; renderVisible();
 }
 function renderVisible(){
   const v=UI.tab; if (!DIRTY[v]) return false; DIRTY[v]=false;
-  if (v==="synthese") renderSynth(); else if (v==="empreinte") renderEmpreinte(); else if (v==="calcul") renderCalcul(); else if (v==="controles") renderSens(); else renderMethodo();
+  if (v==="synthese") renderSynth(); else if (v==="empreinte") renderEmpreinte(); else if (v==="calcul") renderCalcul(); else if (v==="demo") renderDemo(); else if (v==="controles") renderSens(); else renderMethodo();
   return true;
 }
 function setStatus(kind, msg, label){ $("srcStatus").replaceChildren(chip(kind, label || (kind==="ok"?L("Importé","Imported"):kind==="warn"?L("Exemple","Sample"):L("Erreur","Error"))), el("span",{class:"ink2 small",text:msg})); }
@@ -2087,6 +2126,165 @@ function renderSteps(){
   card("CO2e_kg", co2s(sum(xs,x=>x.g)), (P.fx&&P.fx.CO2e_kg)||FX_DEFAULT.CO2e_kg);
 }
 
+/* 4. Démonstration */
+// Formule lue comme arbre (même grammaire que compileExpr), pour l'écrire en notation mathématique avec les symboles puis avec les valeurs
+function parseTree(src){
+  const s=String(src); let i=0;
+  const err=()=>{ throw new Error("formule"); };
+  const ws=()=>{ while(i<s.length && /\s/.test(s[i])) i++; };
+  function primary(){
+    ws(); const c=s[i];
+    if (c==="("){ i++; const e=expr(); ws(); if (s[i]!==")") err(); i++; return e; }
+    if (c==="-"){ i++; return {t:"neg", a:power()}; }
+    if (c==="+"){ i++; return power(); }
+    const n=s.slice(i).match(/^(\d+(?:[.,]\d+)?(?:e[-+]?\d+)?)/i);
+    if (n){ i+=n[1].length; return {t:"n", v:Number(n[1].replace(",","."))}; }
+    const id=s.slice(i).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+    if (id){ const name=id[0]; i+=name.length; ws();
+      if (s[i]==="("){ i++; const args=[]; ws(); if (s[i]!==")"){ for(;;){ args.push(expr()); ws(); if (s[i]===";"||s[i]===","&&args.length<9){ i++; continue; } break; } } ws(); if (s[i]!==")") err(); i++; return {t:"f", name:name.toLowerCase(), args}; }
+      return {t:"v", name}; }
+    err();
+  }
+  function power(){ const b=primary(); ws(); if (s[i]==="^"){ i++; return {t:"b", op:"^", a:b, b:power()}; } return b; }
+  function term(){ let a=power(); for(;;){ ws(); const c=s[i]; if (c==="*"||c==="×"){ i++; a={t:"b", op:"*", a, b:power()}; } else if (c==="/"){ i++; a={t:"b", op:"/", a, b:power()}; } else return a; } }
+  function expr(){ let a=term(); for(;;){ ws(); const c=s[i]; if (c==="+"){ i++; a={t:"b", op:"+", a, b:term()}; } else if (c==="-"||c==="−"){ i++; a={t:"b", op:"-", a, b:term()}; } else return a; } }
+  const f=expr(); ws(); if (i<s.length) err(); return f;
+}
+// Formule effectivement appliquée (celle de la vue Calcul, ou celle de la méthode si la saisie est invalide)
+function fxTree(k){ const src=FX_ERR[k] ? FX_DEFAULT[k] : ((P.fx&&P.fx[k])||FX_DEFAULT[k]); try{ return parseTree(src); }catch(e){ return parseTree(FX_DEFAULT[k]); } }
+function evalTree(n, v){
+  if (n.t==="n") return n.v; if (n.t==="v") return v[n.name]; if (n.t==="neg") return -evalTree(n.a,v);
+  if (n.t==="f") return ({max:Math.max,min:Math.min,abs:Math.abs})[n.name](...n.args.map(x=>evalTree(x,v)));
+  const a=evalTree(n.a,v), b=evalTree(n.b,v); return n.op==="+"?a+b : n.op==="-"?a-b : n.op==="*"?a*b : n.op==="/"?a/b : Math.pow(a,b);
+}
+const DSYM={I:"<i>I</i>",O:"<i>O</i>",CR:"CR",CW:"CW",delta:"<i>δ</i>",epsilon:"<i>ε</i>",s_I:"<i>s</i><sub>I</sub>",s_CR:"<i>s</i><sub>CR</sub>",s_CW:"<i>s</i><sub>CW</sub>",FE_token:"FE<sub>token</sub>",e_O:"<i>e</i><sub>O</sub>",PUE:"PUE",fab:"fab",FE_mix:"FE<sub>mix</sub>",F:"<i>F</i>",T_O:"<i>T</i><sub>O</sub>",E_kWh:"<i>E</i>",CO2e_kg:"CO<sub>2</sub>e"};
+const DPRICE=["<i>P</i><sub>I</sub>","<i>P</i><sub>CR</sub>","<i>P</i><sub>CW</sub>","<i>P</i><sub>O</sub>"];
+// Nombres de la démonstration : entiers groupés au-delà de 1 000, 6 chiffres significatifs, notation scientifique sous 0,001 (r = valeur affichée)
+function dnum(v){
+  if (!isFinite(v)) return {h:"—", p:5, r:v};
+  if (v===0) return {h:"0", p:5, r:0};
+  const a=Math.abs(v); let h, p=5, r;
+  if (a>=1000){ r=Math.round(a); h=fmtInt(a); }
+  else if (a>=1e-3){ r=Number(a.toPrecision(6)); h=new Intl.NumberFormat(LOC(),{maximumSignificantDigits:6}).format(a); }
+  else { let e=Math.floor(Math.log10(a)), m=Math.round(a/Math.pow(10,e)*1e4)/1e4; if (m>=10){ m/=10; e++; } r=m*Math.pow(10,e); h=`${new Intl.NumberFormat(LOC(),{maximumFractionDigits:4}).format(m)} × 10<sup>−${-e}</sup>`; p=1.9; }
+  return v<0 ? {h:"−"+h, p:0.9, r:-r} : {h, p, r};
+}
+const dwrap=(x,min)=> x.p<min ? `(${x.h})` : x.h;
+const dfrac=(a,b)=>`<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+function dtex(n, val){
+  if (n.t==="n") return dnum(n.v);
+  if (n.t==="v"){ if (!val) return {h:DSYM[n.name]||n.name, p:5}; const d=dnum(val[n.name]); return {h:`<span class="dv">${d.h}</span>`, p:d.p}; }
+  if (n.t==="neg"){ const a=dtex(n.a,val); return {h:"−"+dwrap(a,3), p:3}; }
+  if (n.t==="f") return {h:`${n.name}(${n.args.map(x=>dtex(x,val).h).join(L(" ; ",", "))})`, p:5};
+  const a=dtex(n.a,val), b=dtex(n.b,val);
+  if (n.op==="/") return {h:dfrac(a.h,b.h), p:4};
+  if (n.op==="^") return {h:`${dwrap(a,5)}<sup>${b.h}</sup>`, p:4};
+  if (n.op==="*") return {h:`${dwrap(a,2)}${val?" × ":" · "}${dwrap(b,2)}`, p:2};
+  return {h:`${dwrap(a,1)} ${n.op==="+"?"+":"−"} ${dwrap(b,n.op==="-"?1.1:1)}`, p:1};
+}
+// Résultat d'une étape : valeur arrondie à l'affichage, « ≈ » si l'arrondi la modifie
+function dres(v, unit, dec){
+  const t = dec!=null ? nf(dec).format(v) : dnum(v).h; const r = dec!=null ? Math.round(v*Math.pow(10,dec))/Math.pow(10,dec) : dnum(v).r;
+  return {h:`<b>${t}</b>${unit?`<span class="u">${unit}</span>`:""}`, op: Math.abs(v-r) > 1e-9*Math.abs(v) ? "≈" : "=", res:true};
+}
+// Une équation alignée : membre de gauche, puis une ligne par transformation (formule, valeurs, résultat)
+function deq(lhs, lines, cap){
+  const g=el("div",{class:"eqg"});
+  lines.forEach((ln,i)=>{ g.append(el("div",{class:"l",html:i?"":lhs}), el("div",{class:"r"+(ln.res?" res":""),html:`<span class="op">${ln.op||"="}</span>${ln.h}`})); });
+  const w=el("div",{class:"eqw"}); if (cap) w.append(el("div",{class:"cap",text:cap})); w.append(g); return w;
+}
+function renderDemo(){
+  const box=$("demo"); box.replaceChildren(); const sel=$("demoModel");
+  const gs=groupBy(RES||[], x=>x.r.modelRaw), models=gs.map(a=>a.k);
+  const cur=models.includes(UI.demoModel) ? UI.demoModel : (models[0]||"");
+  sel.replaceChildren(...models.map(m=>el("option",{value:m,text:m}))); sel.value=cur; UI.demoModel=cur;
+  if (!cur){ box.append(el("p",{class:"small muted",text:L("Aucune ligne importée pour la période et les filtres choisis.","No imported row for the chosen period and filters.")})); return; }
+  const xs=RES.filter(x=>x.r.modelRaw===cur), n=xs.length, c=xs[0].c, o=mp(cur), {m}=modelInfo(cur);
+  // Périodes à paramètres constants : un changement de prix en cours de période découpe le calcul
+  const segM=new Map();
+  for (const x of xs){ const v=x.p.v, k=[v.sI,v.sCR,v.sCW,v.eO,v.PUE,v.fab,x.p.fe,x.p.mix].join("|"); let s=segM.get(k); if (!s){ s={xs:[], p:x.p, a:x.r.date, b:x.r.date}; segM.set(k,s); } s.xs.push(x); if (x.r.date<s.a) s.a=x.r.date; if (x.r.date>s.b) s.b=x.r.date; }
+  const segs=[...segM.values()].sort((u,w)=>u.a<w.a?-1:1), multi=segs.length>1;
+  for (const s of segs){ const S=k=>sum(s.xs,x=>x.r[k]), v=s.p.v; s.val={I:S("I"),O:S("O"),CR:S("CR"),CW:S("CW"),delta:c.d,epsilon:c.e,s_I:v.sI,s_CR:v.sCR,s_CW:v.sCW,FE_token:s.p.fe,e_O:v.eO,PUE:v.PUE,fab:v.fab,FE_mix:s.p.mix}; }
+  const tag=(h,k)=> multi ? `${h}<sup class="sg">(${k+1})</sup>` : h;
+  // plusieurs équations par période tarifaire : un bloc par période, titré
+  const segBlock=(s,k,eqs)=>{ if (!multi) return eqs; const d=el("div",{class:"eqseg"}), g=el("div",{class:"eqs"}); eqs.forEach(x=>g.append(x)); d.append(el("div",{class:"cap",text:cap(s,k)}), g); return [d]; };
+  const cap=(s,k)=> multi ? L(`Période tarifaire ${k+1} : du ${frDate(s.a)} au ${frDate(s.b)}, ${fmtInt(s.xs.length)} lignes`,`Price period ${k+1}: ${frDate(s.a)} to ${frDate(s.b)}, ${fmtInt(s.xs.length)} rows`) : null;
+  const fa=$("fFrom").value, fb=$("fTo").value, da=segs[0].a, db=segs.reduce((z,s)=>s.b>z?s.b:z,""), days=new Set(xs.map(x=>x.r.date)).size, users=DATA.hasUser ? new Set(xs.map(x=>x.r.user)).size : 0;
+  const act=FDIMS.filter(d=>d.k!=="model" && FSEL[d.k] && d.ok());
+  // Périmètre et principe
+  const intro=el("div",{class:"dintro"});
+  intro.append(el("p",{class:"ink2",text:L(`Modèle « ${cur} »${m&&m.name!==cur?` (tarif et paramètres de « ${m.name} »)`:""}, période du ${frDate(fa)} au ${frDate(fb)} : ${fmtInt(n)} ligne${n>1?"s":""} d'usage réel sur ${fmtInt(days)} jour${days>1?"s":""} (du ${frDate(da)} au ${frDate(db)})${users?`, ${fmtInt(users)} utilisateur${users>1?"s":""}`:""}, sans projection.${act.length?` Filtre actif : ${act.map(d=>d.label.toLowerCase()).join(", ")}.`:""}`,
+    `Model “${cur}”${m&&m.name!==cur?` (price and parameters of “${m.name}”)`:""}, period ${frDate(fa)} to ${frDate(fb)}: ${fmtInt(n)} row${n>1?"s":""} of actual usage over ${fmtInt(days)} day${days>1?"s":""} (${frDate(da)} to ${frDate(db)})${users?`, ${fmtInt(users)} user${users>1?"s":""}`:""}, no projection.${act.length?` Active filter: ${act.map(d=>d.label.toLowerCase()).join(", ")}.`:""}`)}));
+  intro.append(el("p",{class:"small muted",text:L(`Chaque formule de la vue Calcul s'applique à chaque ligne ℓ de l'export. Les formules sont linéaires et les paramètres constants sur ${multi?"chaque période tarifaire":"la période"} : on les applique donc directement aux sommes des lignes. Valeurs arrondies à l'affichage, calculs en pleine précision.${multi?" Le prix de ce modèle change pendant la période : le calcul est fait pour chaque période tarifaire, puis les résultats sont additionnés.":""}`,
+    `Each formula of the Calculation view applies to each row ℓ of the export. The formulas are linear and the parameters constant over ${multi?"each price period":"the period"}, so they apply directly to the row sums. Values are rounded for display, computed at full precision.${multi?" This model's price changes during the period: the calculation is done for each price period, then the results are added up.":""}`)}));
+  box.append(intro);
+  let no=0;
+  const step=(title, why, parts, src)=>{ no++; const d=el("section",{class:"dstep"}); d.append(el("div",{class:"no",text:String(no).padStart(2,"0")})); const b=el("div",{class:"bd"}); b.append(el("h3",{text:title})); if (why) b.append(el("p",{class:"why",text:why})); const g=el("div",{class:"eqs"}); parts.filter(Boolean).forEach(p=>g.append(p)); b.append(g); (Array.isArray(src)?src:[src]).filter(Boolean).forEach(t=>b.append(typeof t==="string"?el("p",{class:"dsrc",text:t}):t)); d.append(b); box.append(d); };
+  const note=t=>el("p",{class:"notice",text:t});
+  // Étape d'une formule de la vue Calcul : symboles, valeurs, résultat ; le résultat retenu est la somme ligne à ligne
+  const fxStep=(k, exact, unit, dec)=>{ const tr=fxTree(k), sym=dtex(tr).h, notes=[];
+    const parts=segs.map((s,i)=>{ const ex=exact(s), agg=evalTree(tr,s.val); s.val[k]=ex;
+      if (Math.abs(agg-ex) > 1e-7*Math.max(1,Math.abs(ex))) notes.push(note(L(`${multi?`Période ${i+1} : `:""}la formule ne se transpose pas aux sommes (fonction max ou min, ou terme constant, évalués ligne par ligne) : le résultat retenu est la somme des ${fmtInt(s.xs.length)} lignes calculées une à une, et non la formule appliquée aux sommes (${dnum(agg).h.replace(/<[^>]+>/g,"")}).`,`${multi?`Period ${i+1}: `:""}the formula does not carry over to the sums (max or min function, or constant term, evaluated row by row): the result kept is the sum of the ${fmtInt(s.xs.length)} rows computed one by one, not the formula applied to the sums (${dnum(agg).h.replace(/<[^>]+>/g,"")}).`)));
+      return deq(tag(DSYM[k],i), [{h:sym}, {h:dtex(tr,s.val).h}, dres(ex,unit,dec)], cap(s,i)); });
+    return {parts, notes}; };
+
+  // 1. Volumes
+  step(L("Volumes de tokens","Token volumes"), L(`Somme, sur les ${fmtInt(n)} lignes ℓ du modèle, des colonnes input, cache_read, cache_write et output de l'export.`,`Sum, over the ${fmtInt(n)} rows ℓ of the model, of the input, cache_read, cache_write and output columns of the export.`),
+    segs.flatMap((s,i)=>segBlock(s,i,["I","CR","CW","O"].map(k=>deq(tag(DSYM[k],i), [{h:`∑<sub>ℓ</sub> ${DSYM[k]}<sub>ℓ</sub>`}, dres(s.val[k],"tokens")])))));
+  // 2. Convention
+  const fam=famOf(cur), t2=CTL.c2[cur], t3=CTL.c3[fam];
+  const why2 = c.how==="Forcée" ? L("Valeurs saisies dans la vue Calcul, Paramètres par modèle.","Values entered in the Calculation view, Per-model parameters.")
+    : c.how==="C2" ? L(`Contrôle C2 : ${fmtInt(t2.pos)} ligne${t2.pos>1?"s":""} sur ${fmtInt(t2.n)} de l'export vérifient CR + CW − I > 0. C'est impossible si l'input contient déjà le cache : l'input ne le contient donc pas.`,`Control C2: ${fmtInt(t2.pos)} row${t2.pos>1?"s":""} out of ${fmtInt(t2.n)} in the export satisfy CR + CW − I > 0. This is impossible if the input already contains the cache, so it does not.`)
+    : c.how==="C3" ? L(`Contrôle C3 : pour la famille ${FAMS[fam].label}, le montant facturé M retrouve le coût théorique C de cette convention sur ${t3.votes[t3.decision]} des ${t3.tested.length} lignes testées.`,`Control C3: for the ${FAMS[fam].label} family, the billed amount M matches the theoretical cost C of this convention on ${t3.votes[t3.decision]} of the ${t3.tested.length} tested rows.`)
+    : L(`Aucun contrôle n'a tranché : convention documentée par le fournisseur (${FAMS[fam].src}).`,`No control was conclusive: convention documented by the provider (${FAMS[fam].src}).`);
+  const rule = c.how==="C2" ? el("div",{class:"eq1",html:`CR + CW − <i>I</i> &gt; 0 &nbsp;⇒&nbsp; <i>δ</i> = <i>ε</i> = 0`}) : c.how==="C3" ? el("div",{class:"eq1",html:`<i>R</i> = ${dfrac("<i>M</i>","<i>C</i>")} &nbsp;${L("et","and")}&nbsp; ${nf(2).format(0.9)} ≤ <i>R</i> ≤ ${nf(2).format(1)}`}) : null;
+  step(L(`Convention de comptage du cache : ${convName(c).toLowerCase()}`,`Cache counting convention: ${convName(c).toLowerCase()}`),
+    L("δ vaut 1 si l'input de l'export contient déjà le cache lu (CR), ε vaut 1 s'il contient déjà le cache écrit (CW). ","δ is 1 if the export input already contains the cache read (CR), ε is 1 if it already contains the cache write (CW). ")+why2,
+    [rule, deq(DSYM.delta,[{h:`<b>${c.d}</b>`}]), deq(DSYM.epsilon,[{h:`<b>${c.e}</b>`}])].filter(Boolean));
+  // 3. Input frais
+  const s3=fxStep("F", s=>sum(s.xs,x=>x.F), "tokens");
+  const neg=xs.filter(x=>x.r.I-c.d*x.r.CR-c.e*x.r.CW<0).length;
+  step(L("Input frais","Fresh input"), L("Tokens d'entrée réellement traités hors cache : on retire de l'input la part du cache qu'il contient déjà.","Input tokens actually processed outside the cache: the share of cache already in the input is removed."), s3.parts,
+    [...s3.notes, neg?note(L(`${fmtInt(neg)} ligne${neg>1?"s":""} donnent I − δ·CR − ε·CW < 0, ramené à 0 ligne par ligne (contrôle C4) : la convention appliquée ne convient pas à ces lignes.`,`${fmtInt(neg)} row${neg>1?"s":""} give I − δ·CR − ε·CW < 0, set to 0 row by row (control C4): the applied convention does not fit these rows.`)):null]);
+  // 4. Rapports de prix
+  const ratioParts=[], ratioSrc=new Set();
+  segs.forEach((s,i)=>{ const q=s.p.q, v=s.p.v, eqs=[];
+    [["s_I","sI",0],["s_CR","sCR",1],["s_CW","sCW",2]].forEach(([k,ok,j])=>{
+      if (o[ok]!=null){ ratioSrc.add(L("Valeur saisie dans la vue Calcul pour ","Value entered in the Calculation view for ")+k+"."); eqs.push(deq(tag(DSYM[k],i),[dres(v[ok])])); }
+      else if (!q.p){ ratioSrc.add(L("Modèle absent de la grille : rapports génériques par défaut.","Model not in the price list: generic default ratios.")); eqs.push(deq(tag(DSYM[k],i),[dres(v[ok])])); }
+      else if (j===2 && !q.cwBilled){ ratioSrc.add(L("Cache write non facturé par la grille : s_CW = s_I.","Cache write not billed in the price list: s_CW = s_I.")); eqs.push(deq(tag(DSYM[k],i),[{h:DSYM.s_I}, dres(v[ok])])); }
+      else eqs.push(deq(tag(DSYM[k],i),[{h:dfrac(DPRICE[j],DPRICE[3])}, {h:dfrac(`<span class="dv">${dnum(q.p[j]).h}</span>`,`<span class="dv">${dnum(q.p[3]).h}</span>`)}, dres(v[ok])])); });
+    ratioParts.push(...segBlock(s,i,eqs)); });
+  step(L("Rapports de prix","Price ratios"), L(`Chaque type de token est ramené à un token de sortie selon le rapport de son prix P au prix de l'output P_O. Prix GitHub en $ par million de tokens${m?` du modèle « ${m.name} »`:""}, grille du 20 octobre 2026, palier standard, en vigueur aux dates des lignes.`,`Each token type is converted into output tokens using the ratio of its price P to the output price P_O. GitHub prices in $ per million tokens${m?` for “${m.name}”`:""}, price list of 20 October 2026, standard tier, in force on the row dates.`), ratioParts, [...ratioSrc]);
+  // 5. Tokens équivalent output
+  const s5=fxStep("T_O", s=>sum(s.xs,x=>x.TO), "tokens");
+  step(L("Tokens équivalent output","Output-equivalent tokens"), L("Input frais et cache pondérés par leurs rapports de prix, plus l'output.","Fresh input and cache weighted by their price ratios, plus the output."), s5.parts, s5.notes);
+  // 6. Énergie
+  const s6=fxStep("E_kWh", s=>sum(s.xs,x=>x.kwh), "kWh", 2);
+  const eco=segs[0].p.eco;
+  step(L("Énergie","Energy"), L(`e_O : énergie par token généré (GPU et serveur, Wh/token)${o.eO!=null?", valeur saisie dans la vue Calcul":`, scénario EcoLogits « ${eco.name} » du Calculateur de Boris`}. PUE : efficacité du datacenter. La division par 1 000 convertit les Wh en kWh. L'énergie n'entre dans le CO₂e que lorsque FE_token vient du Calculateur de Boris.`,`e_O: energy per generated token (GPU and server, Wh/token)${o.eO!=null?", value entered in the Calculation view":`, EcoLogits scenario “${eco.name}” of Boris's calculator`}. PUE: datacenter efficiency. Dividing by 1,000 converts Wh into kWh. Energy only enters the CO₂e when FE_token comes from Boris's calculator.`), s6.parts, s6.notes);
+  // 7. Facteur d'émission
+  const fe=segs[0].p, sc=FE_SCEN.find(x=>x.id===P.feId)||FE_SCEN[0];
+  const fab=P.fab ? ` + ${DSYM.fab}` : "";
+  const feParts=segs.map((s,i)=>{ const p=s.p;
+    if (p.feSrc!=="tool") return deq(tag(DSYM.FE_token,i),[dres(p.fe,L("kgCO₂e/token","kgCO₂e/token"))],cap(s,i));
+    return deq(tag(DSYM.FE_token,i),[{h:`${dfrac(`${DSYM.e_O} · PUE · ${DSYM.FE_mix}`,"10<sup>6</sup>")}${fab}`}, {h:`${dfrac(`<span class="dv">${dnum(p.v.eO).h}</span> × <span class="dv">${dnum(p.v.PUE).h}</span> × <span class="dv">${dnum(p.mix).h}</span>`,"10<sup>6</sup>")}${P.fab?` + <span class="dv">${dnum(p.v.fab).h}</span>`:""}`}, dres(p.fe,"kgCO₂e/token")],cap(s,i)); });
+  const why7 = fe.feSrc==="saisi" ? L("Valeur saisie dans la vue Calcul, Paramètres par modèle, en kgCO₂e par token équivalent output.","Value entered in the Calculation view, Per-model parameters, in kgCO₂e per output-equivalent token.")
+    : fe.feSrc!=="tool" ? L(`Valeur de la table de facteurs fournie, ligne « ${fe.tf.name} » (${fe.tf.k==="S"?"sourcée":"hypothèse"}), en kgCO₂e par token équivalent output.`,`Value from the supplied factor table, row “${fe.tf.name}” (${fe.tf.k==="S"?"sourced":"assumption"}), in kgCO₂e per output-equivalent token.`)
+    : L(`${P.feMode==="table"?"Modèle absent de votre table de facteurs : facteur":"Facteur"} du Calculateur de Boris. FE_mix : mix électrique « ${sc.short||sc.label} » (gCO₂e/kWh). La division par 10⁶ convertit des Wh × g/kWh en kg${P.fab?" ; fab ajoute la fabrication du matériel par token (kgCO₂e/token)":""}.`,`${P.feMode==="table"?"Model not in your factor table: factor":"Factor"} from Boris's calculator. FE_mix: electricity mix “${sc.short||sc.label}” (gCO₂e/kWh). Dividing by 10⁶ converts Wh × g/kWh into kg${P.fab?"; fab adds hardware manufacturing per token (kgCO₂e/token)":""}.`);
+  step(L("Facteur d'émission par token","Emission factor per token"), why7, feParts);
+  // 8. Empreinte
+  const s8=fxStep("CO2e_kg", s=>sum(s.xs,x=>x.g)/1000, "kgCO₂e", 2);
+  step(L("Empreinte carbone","Carbon footprint"), L("Tokens équivalent output multipliés par le facteur d'émission par token.","Output-equivalent tokens multiplied by the emission factor per token."), s8.parts, s8.notes);
+  const totKg=sum(xs,x=>x.g)/1000, totKwh=sum(xs,x=>x.kwh);
+  if (multi) step(L("Somme des périodes tarifaires","Sum of the price periods"), null, [deq(DSYM.CO2e_kg,[{h:segs.map((s,i)=>`${DSYM.CO2e_kg}<sup class="sg">(${i+1})</sup>`).join(" + ")}, {h:segs.map(s=>`<span class="dv">${nf(2).format(s.val.CO2e_kg)}</span>`).join(" + ")}, dres(totKg,"kgCO₂e",2)])]);
+  // Conclusion
+  const [cv,cu]=co2(totKg*1000); const cc=el("div",{class:"dconc"});
+  cc.append(el("div",{class:"eyebrow",text:L("Résultat","Result")}), el("div",{class:"v",html:`${cv}<span>${cu}</span>`}),
+    el("p",{class:"small ink2",text:L(`Soit ${nf(2).format(totKg)} kgCO₂e et ${kwhs(totKwh)} pour « ${cur} » sur la période du ${frDate(fa)} au ${frDate(fb)}, soit ${fmtInt(n)} lignes d'usage réel du ${frDate(da)} au ${frDate(db)}. C'est le total de ce modèle dans le tableau par modèle de la vue Empreinte, pour la même période et les mêmes filtres.`,`That is ${nf(2).format(totKg)} kgCO₂e and ${kwhs(totKwh)} for “${cur}” over the period ${frDate(fa)} to ${frDate(fb)}, i.e. ${fmtInt(n)} rows of actual usage from ${frDate(da)} to ${frDate(db)}. It is this model's total in the per-model table of the Footprint view, for the same period and filters.`)}));
+  box.append(cc);
+}
+
 /* 3. Contrôles */
 function renderControles(){
   const box=$("checks"); box.replaceChildren(); const iss=DATA.issues; let worst="ok";
@@ -2219,9 +2417,9 @@ function deliver(name, text, type){
 /* ---------- Onglets et événements ---------- */
 function showTab(v, push){
   const noData=!DATA.rows.length;
-  if (noData){ if (!["calcul","methodologie"].includes(v)) v="accueil"; } else if (!["synthese","empreinte","calcul","controles","methodologie"].includes(v)) v="synthese";
+  if (noData){ if (!["calcul","methodologie"].includes(v)) v="accueil"; } else if (!["synthese","empreinte","calcul","demo","controles","methodologie"].includes(v)) v="synthese";
   document.body.classList.toggle("browse", noData && v!=="accueil");
-  $("filtersWrap").hidden = !["synthese","empreinte"].includes(v);
+  $("filtersWrap").hidden = !["synthese","empreinte","demo"].includes(v);
   UI.tab=v; document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected", String(b.dataset.v===v)));
   document.querySelectorAll(".view").forEach(s=>s.hidden = s.id!=="v-"+v);
   if (push){ try{ history.replaceState(null,"","#"+v); }catch(e){} }
@@ -2245,6 +2443,7 @@ $("metricSeg").addEventListener("click",e=>{ const b=e.target.closest("button");
 $("viewSeg").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; UI.view=b.dataset.v; setSeg("viewSeg","v",UI.view); renderChart(); });
 $("costSeg").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; UI.cost=b.dataset.c; renderCost(); });
 $("stepModel").addEventListener("change",e=>{ UI.stepModel=e.target.value; renderSteps(); });
+$("demoModel").addEventListener("change",e=>{ UI.demoModel=e.target.value; renderDemo(); });
 $("pMode").addEventListener("change",e=>{ P.feMode=e.target.value; saveParams(); renderAll(); });
 $("pFE").addEventListener("change",e=>{ P.feId=e.target.value; saveParams(); renderAll(); });
 $("pFab").addEventListener("change",e=>{ P.fab=e.target.checked; saveParams(); renderAll(); });
@@ -2269,7 +2468,7 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()
 new MutationObserver(()=>{ if (DATA.rows.length) renderChart(); }).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 
 // Textes fixes de la page : français dans le HTML, anglais dans ce dictionnaire
-const I18N = {"Accueil": "Home", "Sans import, les onglets Calcul et Méthodologie restent consultables : formules, grille tarifaire, facteurs d'émission et mix électriques.": "Without an import, the Calculation and Methodology tabs can still be browsed: formulas, price list, emission factors and electricity mixes.", "GitHub Copilot · inférence · méthode du 20 octobre 2026": "GitHub Copilot · inference · method of 20 October 2026", "Empreinte carbone de GitHub Copilot": "GitHub Copilot carbon footprint", "Importer l'extraction GitHub": "Import GitHub extract", "Recharger l'exemple": "Reload the sample", "Ou glissez-déposez le fichier. Tout est calculé dans votre navigateur.": "Or drag and drop the file. Everything is computed in your browser.", "Associer les colonnes": "Map the columns", "Certaines colonnes n'ont pas été reconnues automatiquement. Indiquez celles de votre export.": "Some columns were not recognized automatically. Point to the ones in your export.", "Appliquer": "Apply", "Vues": "Views", "Empreinte": "Footprint", "Calcul": "Calculation", "Contrôles": "Controls", "Méthodologie": "Methodology", "Filtres": "Filters", "Vue": "View", "Jour": "Day", "Semaine": "Week", "Mois": "Month", "Trimestre": "Quarter", "Année": "Year", "Tout": "All", "Période": "Period", "Période précédente": "Previous period", "Période suivante": "Next period", "Du": "From", "Au": "To", "Utilisateur": "User", "Tous": "All", "Modèle": "Model", "Organisation": "Organization", "Toutes": "All", "Centre de coût": "Cost center", "Synthèse": "Summary", "Équivalences": "Equivalents", "Ordres de grandeur pour se représenter le résultat central. Facteurs et sources dans la vue": "Orders of magnitude to picture the central result. Factors and sources in the", "Tendance": "Trend", "Émissions par jour": "Emissions per day", "Tokens éq. output": "Output-eq. tokens", "Pas": "Step", "Sem.": "Wk", "Trim.": "Qtr", "Barres": "Bars", "Courbes": "Lines", "Tableau": "Table", "Émissions cumulées": "Cumulative emissions", "Détail par mois": "Monthly breakdown", "Intensité": "Intensity", "Où se concentrent les émissions": "Where emissions concentrate", "Top émetteurs": "Top emitters", "Les cinq premiers de chaque dimension, en part de l'empreinte de la période.": "The top five of each dimension, as a share of the period footprint.", "Émissions jour par jour, semaine par semaine": "Emissions day by day, week by week", "Chaque case est un jour : une ligne par jour de la semaine (lundi à dimanche), une colonne par semaine (date du lundi). Plus la case est foncée, plus ce jour a émis de CO₂e. La colonne « Part » donne le poids de chaque jour de la semaine sur la période.": "Each cell is one day: one row per day of the week (Monday to Sunday), one column per week (Monday's date). The darker the cell, the more CO₂e that day emitted. The “Share” column gives each weekday's weight over the period.", "Leviers et incertitude": "Levers and uncertainty", "Levier modèle": "Model lever", "Économie si une part des tokens d'un modèle était traitée par un autre modèle déjà utilisé.": "Saving if part of one model's tokens were handled by another model already in use.", "Modèle actuel": "Current model", "Modèle cible": "Target model", "Part basculée :": "Share switched:", "Hypothèse : même volume de tokens par catégorie et ratios de prix du modèle cible. Un modèle plus léger peut produire plus de tokens ou un résultat différent ; l'économie est un ordre de grandeur.": "Assumption: same token volume per category and the target model's price ratios. A lighter model may produce more tokens or a different result; the saving is an order of magnitude.", "Fourchette d'incertitude": "Uncertainty range", "Le résultat central recalculé avec d'autres facteurs, mix électriques et conventions, sur la période et les filtres choisis.": "The central result recomputed with other factors, electricity mixes and conventions, for the selected period and filters.", "Détail": "Details", "Par modèle": "By model", "Facteur appliqué (FE_token, en kgCO₂e par token) et part des émissions. H : hypothèse de votre table ; B : Calculateur de Boris ; S : valeur saisie.": "Applied factor (FE_token, in kgCO₂e per token) and share of emissions. H: assumption in your table; B: Boris's calculator; E: entered value.", "Par utilisateur": "By user", "Sur la période et les filtres choisis.": "For the selected period and filters.", "Dépôt": "Repository", "Exporter les résultats par jour (CSV)": "Export daily results (CSV)", "Formules": "Formulas", "Appliquées à chaque ligne de l'export, dans cet ordre. Modifiez-les puis appuyez sur Entrée ou quittez le champ : tout le tableau de bord est recalculé.": "Applied to each export row, in this order. Edit them then press Enter or leave the field: the whole dashboard is recomputed.", "Rétablir les formules de la méthode": "Restore the method formulas", "Variables et fonctions disponibles": "Available variables and functions", "Paramètres par modèle": "Parameters per model", "Valeur par défaut en clair, valeur modifiée surlignée. Videz un champ pour revenir à la valeur par défaut.": "Default value in light text, modified value highlighted. Clear a field to go back to the default.", "Rétablir tous les paramètres": "Restore all parameters", "Paramètres communs": "Common parameters", "Utilisés pour calculer FE_token quand un modèle n'a pas de facteur dans votre table, et pour les variantes de sensibilité.": "Used to compute FE_token when a model has no factor in your table, and for the sensitivity variants.", "Source de FE_token par défaut": "Default FE_token source", "Table de facteurs fournie": "Supplied factor table", "Calculateur de Boris pour tous les modèles": "Boris's calculator for all models", "Mix électrique (FE_mix)": "Electricity mix (FE_mix)", "Mix personnalisé (gCO₂e/kWh)": "Custom mix (gCO₂e/kWh)", "Fabrication du matériel": "Hardware manufacturing", "Ajouter « fab » dans le Calculateur de Boris": "Add “fab” to Boris's calculator", "Le facteur du Calculateur de Boris l'inclut ; la méthode PDF l'exclut.": "Boris's calculator factor includes it; the PDF method excludes it.", "Multiplicateurs de sensibilité bas / haut": "Low / high sensitivity multipliers", "Calcul pas à pas": "Step-by-step calculation", "Sommes sur tout l'export pour un modèle, avec les formules et paramètres ci-dessus.": "Totals over the whole export for one model, with the formulas and parameters above.", "Projection de fin de mois": "End-of-month projection", "Même périmètre que la vue Empreinte (période et filtres). Le résultat alimente les tuiles de projection et la courbe du cumul de la vue Empreinte.": "Same scope as the Footprint view (period and filters). The result feeds the projection tiles and the cumulative curve of the Footprint view.", "Rétablir le modèle par défaut": "Restore the default model", "Méthode": "Method", "Fenêtre N (jours)": "Window N (days)", "Jours récents pris en compte. Sans objet pour le rythme moyen à date et le modèle fondé sur les usages.": "Recent days taken into account. Not used by the average pace to date or the usage-based model.", "Croissance": "Growth", "Amortie": "Damped", "Constante": "Constant", "Nulle": "None", "Modèle fondé sur les usages : prolongement de la hausse des utilisateurs et de l'usage par personne.": "Usage-based model: how the growth in users and usage per person is extended.", "Licences (plafond d'utilisateurs)": "Licences (user cap)", "0 = sans plafond. Modèle fondé sur les usages uniquement.": "0 = no cap. Usage-based model only.", "Ajustement du reste de l'horizon (%)": "Adjustment of the rest of the horizon (%)", "Pour un événement connu : déploiement, congés, changement de modèle.": "For a known event: rollout, holidays, model change.", "Contrôle a posteriori": "Backtest", "Chaque méthode est rejouée sur les mois complets précédents, arrêtée au même jour du mois, puis comparée au total réel. L'ajustement en % n'y est pas appliqué. L'écart aide à choisir la méthode.": "Each method is replayed on the previous complete months, stopped at the same day of the month, then compared with the actual total. The % adjustment is not applied. The error helps choose the method.", "C6 · Sensibilité": "C6 · Sensitivity", "Résultat central et variantes, sur tout le jeu de données importé.": "Central result and variants, over the whole imported dataset.", "Sommaire": "Contents", "Objet": "Purpose", "Étapes": "Steps", "Conventions δ et ε": "δ and ε conventions", "Ratios de prix": "Price ratios", "Facteurs d'émission": "Emission factors", "Mix électriques": "Electricity mixes", "Indicateurs": "Indicators", "Limites": "Limitations", "Sources": "Sources", "Traçabilité": "Traceability", "Objet et périmètre": "Purpose and scope", "Étapes de calcul": "Calculation steps", "Facteurs d'émission par token": "Emission factors per token", "Indicateurs de la vue Empreinte": "Footprint view indicators", "Grille tarifaire et ratios (38 modèles)": "Price list and ratios (38 models)", "Table de facteurs complète (61 lignes)": "Full factor table (61 rows)", "Traçabilité du traitement": "Processing traceability", "Section 6 de la méthode : paramètres utilisés pour l'export importé.": "Method section 6: parameters used for the imported export.", "Exporter les paramètres (JSON)": "Export the parameters (JSON)", "Langue": "Language", "Copier le texte": "Copy the text", "Pour un support : faites une capture d'écran du cadre, ou copiez le texte pour coller les chiffres. La synthèse suit la période et les filtres.": "For a slide: take a screenshot of the frame, or copy the text to paste the figures. The summary follows the period and filters.", "Chiffres clés": "Key figures", "Ce mois": "This month", "Mois dernier": "Last month", "Cette année": "This year", "Découpage": "Breakdown", "Affiché": "Showing", "Dates précises": "Exact dates", "Coûts et carbone": "Costs and carbon", "Dépense et empreinte": "Spend and footprint", "Chaque point est un élément de la dimension choisie : montant brut facturé (gross_amount) en abscisse, CO₂e en ordonnée. La droite pointillée suit l'intensité moyenne de la période : au-dessus, l'élément émet plus par dollar que la moyenne.": "Each dot is one item of the chosen dimension: gross billed amount (gross_amount) on the x axis, CO₂e on the y axis. The dashed line follows the period's average intensity: above it, the item emits more per dollar than average.", "Intensité par dollar dans le temps": "Intensity per dollar over time", "Dépense et CO₂e par élément": "Spend and CO₂e per item", "gCO₂e par dollar brut, par pas de temps du graphique de tendance. Une hausse signale un glissement vers des modèles plus émetteurs à dépense égale.": "gCO₂e per gross dollar, for each time step of the trend chart. A rise signals a shift toward higher-emitting models for the same spend.", "Fin du mois": "End of month", "Fin de l'année": "End of year", "Aucune donnée pour l'instant": "No data yet", "Importez l'export « AI usage report » de GitHub Copilot au format CSV, avec le bouton « Importer l'extraction GitHub » ou par glisser-déposer. Le fichier reste dans votre navigateur.": "Import the GitHub Copilot “AI usage report” export as a CSV, with the “Import GitHub extract” button or by drag and drop. The file stays in your browser."};
+const I18N = {"Accueil": "Home", "Sans import, les onglets Calcul et Méthodologie restent consultables : formules, grille tarifaire, facteurs d'émission et mix électriques.": "Without an import, the Calculation and Methodology tabs can still be browsed: formulas, price list, emission factors and electricity mixes.", "GitHub Copilot · inférence · méthode du 20 octobre 2026": "GitHub Copilot · inference · method of 20 October 2026", "Empreinte carbone de GitHub Copilot": "GitHub Copilot carbon footprint", "Importer l'extraction GitHub": "Import GitHub extract", "Recharger l'exemple": "Reload the sample", "Ou glissez-déposez le fichier. Tout est calculé dans votre navigateur.": "Or drag and drop the file. Everything is computed in your browser.", "Associer les colonnes": "Map the columns", "Certaines colonnes n'ont pas été reconnues automatiquement. Indiquez celles de votre export.": "Some columns were not recognized automatically. Point to the ones in your export.", "Appliquer": "Apply", "Vues": "Views", "Empreinte": "Footprint", "Calcul": "Calculation", "Contrôles": "Controls", "Méthodologie": "Methodology", "Filtres": "Filters", "Vue": "View", "Jour": "Day", "Semaine": "Week", "Mois": "Month", "Trimestre": "Quarter", "Année": "Year", "Tout": "All", "Période": "Period", "Période précédente": "Previous period", "Période suivante": "Next period", "Du": "From", "Au": "To", "Utilisateur": "User", "Tous": "All", "Modèle": "Model", "Organisation": "Organization", "Toutes": "All", "Centre de coût": "Cost center", "Synthèse": "Summary", "Équivalences": "Equivalents", "Ordres de grandeur pour se représenter le résultat central. Facteurs et sources dans la vue": "Orders of magnitude to picture the central result. Factors and sources in the", "Tendance": "Trend", "Émissions par jour": "Emissions per day", "Tokens éq. output": "Output-eq. tokens", "Pas": "Step", "Sem.": "Wk", "Trim.": "Qtr", "Barres": "Bars", "Courbes": "Lines", "Tableau": "Table", "Émissions cumulées": "Cumulative emissions", "Détail par mois": "Monthly breakdown", "Intensité": "Intensity", "Où se concentrent les émissions": "Where emissions concentrate", "Top émetteurs": "Top emitters", "Les cinq premiers de chaque dimension, en part de l'empreinte de la période.": "The top five of each dimension, as a share of the period footprint.", "Émissions jour par jour, semaine par semaine": "Emissions day by day, week by week", "Chaque case est un jour : une ligne par jour de la semaine (lundi à dimanche), une colonne par semaine (date du lundi). Plus la case est foncée, plus ce jour a émis de CO₂e. La colonne « Part » donne le poids de chaque jour de la semaine sur la période.": "Each cell is one day: one row per day of the week (Monday to Sunday), one column per week (Monday's date). The darker the cell, the more CO₂e that day emitted. The “Share” column gives each weekday's weight over the period.", "Leviers et incertitude": "Levers and uncertainty", "Levier modèle": "Model lever", "Économie si une part des tokens d'un modèle était traitée par un autre modèle déjà utilisé.": "Saving if part of one model's tokens were handled by another model already in use.", "Modèle actuel": "Current model", "Modèle cible": "Target model", "Part basculée :": "Share switched:", "Hypothèse : même volume de tokens par catégorie et ratios de prix du modèle cible. Un modèle plus léger peut produire plus de tokens ou un résultat différent ; l'économie est un ordre de grandeur.": "Assumption: same token volume per category and the target model's price ratios. A lighter model may produce more tokens or a different result; the saving is an order of magnitude.", "Fourchette d'incertitude": "Uncertainty range", "Le résultat central recalculé avec d'autres facteurs, mix électriques et conventions, sur la période et les filtres choisis.": "The central result recomputed with other factors, electricity mixes and conventions, for the selected period and filters.", "Détail": "Details", "Par modèle": "By model", "Facteur appliqué (FE_token, en kgCO₂e par token) et part des émissions. H : hypothèse de votre table ; B : Calculateur de Boris ; S : valeur saisie.": "Applied factor (FE_token, in kgCO₂e per token) and share of emissions. H: assumption in your table; B: Boris's calculator; E: entered value.", "Par utilisateur": "By user", "Sur la période et les filtres choisis.": "For the selected period and filters.", "Dépôt": "Repository", "Exporter les résultats par jour (CSV)": "Export daily results (CSV)", "Formules": "Formulas", "Appliquées à chaque ligne de l'export, dans cet ordre. Modifiez-les puis appuyez sur Entrée ou quittez le champ : tout le tableau de bord est recalculé.": "Applied to each export row, in this order. Edit them then press Enter or leave the field: the whole dashboard is recomputed.", "Rétablir les formules de la méthode": "Restore the method formulas", "Variables et fonctions disponibles": "Available variables and functions", "Paramètres par modèle": "Parameters per model", "Valeur par défaut en clair, valeur modifiée surlignée. Videz un champ pour revenir à la valeur par défaut.": "Default value in light text, modified value highlighted. Clear a field to go back to the default.", "Rétablir tous les paramètres": "Restore all parameters", "Paramètres communs": "Common parameters", "Utilisés pour calculer FE_token quand un modèle n'a pas de facteur dans votre table, et pour les variantes de sensibilité.": "Used to compute FE_token when a model has no factor in your table, and for the sensitivity variants.", "Source de FE_token par défaut": "Default FE_token source", "Table de facteurs fournie": "Supplied factor table", "Calculateur de Boris pour tous les modèles": "Boris's calculator for all models", "Mix électrique (FE_mix)": "Electricity mix (FE_mix)", "Mix personnalisé (gCO₂e/kWh)": "Custom mix (gCO₂e/kWh)", "Fabrication du matériel": "Hardware manufacturing", "Ajouter « fab » dans le Calculateur de Boris": "Add “fab” to Boris's calculator", "Le facteur du Calculateur de Boris l'inclut ; la méthode PDF l'exclut.": "Boris's calculator factor includes it; the PDF method excludes it.", "Multiplicateurs de sensibilité bas / haut": "Low / high sensitivity multipliers", "Calcul pas à pas": "Step-by-step calculation", "Sommes sur tout l'export pour un modèle, avec les formules et paramètres ci-dessus.": "Totals over the whole export for one model, with the formulas and parameters above.", "Projection de fin de mois": "End-of-month projection", "Même périmètre que la vue Empreinte (période et filtres). Le résultat alimente les tuiles de projection et la courbe du cumul de la vue Empreinte.": "Same scope as the Footprint view (period and filters). The result feeds the projection tiles and the cumulative curve of the Footprint view.", "Rétablir le modèle par défaut": "Restore the default model", "Méthode": "Method", "Fenêtre N (jours)": "Window N (days)", "Jours récents pris en compte. Sans objet pour le rythme moyen à date et le modèle fondé sur les usages.": "Recent days taken into account. Not used by the average pace to date or the usage-based model.", "Croissance": "Growth", "Amortie": "Damped", "Constante": "Constant", "Nulle": "None", "Modèle fondé sur les usages : prolongement de la hausse des utilisateurs et de l'usage par personne.": "Usage-based model: how the growth in users and usage per person is extended.", "Licences (plafond d'utilisateurs)": "Licences (user cap)", "0 = sans plafond. Modèle fondé sur les usages uniquement.": "0 = no cap. Usage-based model only.", "Ajustement du reste de l'horizon (%)": "Adjustment of the rest of the horizon (%)", "Pour un événement connu : déploiement, congés, changement de modèle.": "For a known event: rollout, holidays, model change.", "Contrôle a posteriori": "Backtest", "Chaque méthode est rejouée sur les mois complets précédents, arrêtée au même jour du mois, puis comparée au total réel. L'ajustement en % n'y est pas appliqué. L'écart aide à choisir la méthode.": "Each method is replayed on the previous complete months, stopped at the same day of the month, then compared with the actual total. The % adjustment is not applied. The error helps choose the method.", "C6 · Sensibilité": "C6 · Sensitivity", "Résultat central et variantes, sur tout le jeu de données importé.": "Central result and variants, over the whole imported dataset.", "Sommaire": "Contents", "Objet": "Purpose", "Étapes": "Steps", "Conventions δ et ε": "δ and ε conventions", "Ratios de prix": "Price ratios", "Facteurs d'émission": "Emission factors", "Mix électriques": "Electricity mixes", "Indicateurs": "Indicators", "Limites": "Limitations", "Sources": "Sources", "Traçabilité": "Traceability", "Objet et périmètre": "Purpose and scope", "Étapes de calcul": "Calculation steps", "Facteurs d'émission par token": "Emission factors per token", "Indicateurs de la vue Empreinte": "Footprint view indicators", "Grille tarifaire et ratios (38 modèles)": "Price list and ratios (38 models)", "Table de facteurs complète (61 lignes)": "Full factor table (61 rows)", "Traçabilité du traitement": "Processing traceability", "Section 6 de la méthode : paramètres utilisés pour l'export importé.": "Method section 6: parameters used for the imported export.", "Exporter les paramètres (JSON)": "Export the parameters (JSON)", "Langue": "Language", "Copier le texte": "Copy the text", "Pour un support : faites une capture d'écran du cadre, ou copiez le texte pour coller les chiffres. La synthèse suit la période et les filtres.": "For a slide: take a screenshot of the frame, or copy the text to paste the figures. The summary follows the period and filters.", "Chiffres clés": "Key figures", "Ce mois": "This month", "Mois dernier": "Last month", "Cette année": "This year", "Découpage": "Breakdown", "Affiché": "Showing", "Dates précises": "Exact dates", "Coûts et carbone": "Costs and carbon", "Dépense et empreinte": "Spend and footprint", "Chaque point est un élément de la dimension choisie : montant brut facturé (gross_amount) en abscisse, CO₂e en ordonnée. La droite pointillée suit l'intensité moyenne de la période : au-dessus, l'élément émet plus par dollar que la moyenne.": "Each dot is one item of the chosen dimension: gross billed amount (gross_amount) on the x axis, CO₂e on the y axis. The dashed line follows the period's average intensity: above it, the item emits more per dollar than average.", "Intensité par dollar dans le temps": "Intensity per dollar over time", "Dépense et CO₂e par élément": "Spend and CO₂e per item", "gCO₂e par dollar brut, par pas de temps du graphique de tendance. Une hausse signale un glissement vers des modèles plus émetteurs à dépense égale.": "gCO₂e per gross dollar, for each time step of the trend chart. A rise signals a shift toward higher-emitting models for the same spend.", "Fin du mois": "End of month", "Fin de l'année": "End of year", "Aucune donnée pour l'instant": "No data yet", "Importez l'export « AI usage report » de GitHub Copilot au format CSV, avec le bouton « Importer l'extraction GitHub » ou par glisser-déposer. Le fichier reste dans votre navigateur.": "Import the GitHub Copilot “AI usage report” export as a CSV, with the “Import GitHub extract” button or by drag and drop. The file stays in your browser.", "Démonstration": "Demonstration", "Démonstration du calcul": "Calculation walkthrough", "Pour un modèle, chaque étape du calcul sur les usages réels importés de la période choisie : la formule, puis la même formule avec les valeurs, jusqu'au CO₂e.": "For one model, each calculation step on the actual imported usage of the chosen period: the formula, then the same formula with the values, up to the CO₂e."};
 const I18N_NODES = [];
 (function collect(){
   const w=document.createTreeWalker(document.querySelector(".wrap"), NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT, {acceptNode:n=>{
@@ -2294,7 +2493,7 @@ function setLang(l){
   const swap={}; for (const k in PH_TXT){ const [fr,en]=PH_TXT[k]; swap[prev==="en"?en:fr]=l==="en"?en:fr; }
   for (const r of DATA.rows){ if (swap[r.modelRaw]) r.modelRaw=swap[r.modelRaw]; if (swap[r.cc]) r.cc=swap[r.cc]; if (swap[r.repo]) r.repo=swap[r.repo]; }
   for (const k in FSEL) if (FSEL[k]) FSEL[k]=new Set([...FSEL[k]].map(v=>swap[v]||v)); for (const k in DIM_VALS) delete DIM_VALS[k];
-  if (swap[UI.stepModel]) UI.stepModel=swap[UI.stepModel]; if (swap[UI.levSrc]) UI.levSrc=swap[UI.levSrc]; if (swap[UI.levTgt]) UI.levTgt=swap[UI.levTgt];
+  if (swap[UI.stepModel]) UI.stepModel=swap[UI.stepModel]; if (swap[UI.demoModel]) UI.demoModel=swap[UI.demoModel]; if (swap[UI.levSrc]) UI.levSrc=swap[UI.levSrc]; if (swap[UI.levTgt]) UI.levTgt=swap[UI.levTgt];
   if (P.mp) for (const k in swap) if (P.mp[k]){ P.mp[swap[k]]=P.mp[k]; delete P.mp[k]; }
   if (P.alias) for (const k in swap) if (P.alias[k]){ P.alias[swap[k]]=P.alias[k]; delete P.alias[k]; }
   // listes et éditeurs construits une seule fois
