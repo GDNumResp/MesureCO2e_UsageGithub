@@ -34,7 +34,7 @@ Tous les paramètres (formules, facteurs, rapports de prix, PUE, mix électrique
 1. Téléchargez `empreinte-carbone-copilot.html` (bouton *Download raw file* sur GitHub) et ouvrez-le dans Edge, Chrome ou Firefox (Edge 111 minimum). Aucune installation et aucune connexion ne sont nécessaires : tout tourne dans le navigateur et les données ne quittent pas le poste.
 2. Cliquez sur **Importer l'extraction GitHub** et choisissez (ou glissez-déposez) le CSV de facturation GitHub Copilot (colonnes `date, username, product, sku, model, quantity, …, input, output, cache_read, cache_write`). Pour essayer, prenez `exemple-export-copilot.csv`.
 3. Naviguez dans les onglets : **Synthèse** (chiffres clés, tendance, atterrissage), **Empreinte** (détail par modèle, cumul, intensité, coûts), **Calcul** (paramètres et projection), **Démonstration** (le calcul d'un modèle déroulé étape par étape sur la période choisie : chaque formule écrite avec ses symboles, puis avec les vraies valeurs, jusqu'au CO2e), **Contrôles**, **Méthodologie**.
-4. Les réglages modifiés sont gardés dans le navigateur. Les exports CSV de résultats s'ouvrent directement dans Excel en français.
+4. Les réglages modifiés sont gardés dans le navigateur. Les exports CSV de résultats s'ouvrent directement dans Excel en français. Dans l'onglet **Calcul**, le bouton **Exporter en Excel** télécharge le tableau « Paramètres par modèle » au format `.xlsx` (valeurs appliquées, valeurs modifiées surlignées, avec une feuille de contexte : mix, formules, date).
 
 ## Utiliser le classeur Excel
 
