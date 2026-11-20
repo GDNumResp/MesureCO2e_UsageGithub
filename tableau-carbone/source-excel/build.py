@@ -113,6 +113,7 @@ def para(ws, row, col, t, ncols, height=None, size=10, color=INK, bold=False):
 wb.remove(wb.active)
 wsS = sheet('Synthèse', NAVY)
 wsE = sheet('Empreinte', NAVY)
+wsP = sheet('Projections 2030', NAVY)
 wsC = sheet('Calcul', '737885')
 wsX = sheet('Démonstration', '737885')
 wsK = sheet('Contrôles', '737885')
@@ -916,11 +917,86 @@ r += len(EXPORT) + 1
 wsH.cell(r, 2, 'Onglets').font = f(12, True); r += 1
 for t in ["Synthèse : indicateurs clés de l'année, tendance, graphique mensuel, modèles les plus émetteurs, phrases à retenir.",
           "Empreinte : tableau mois par mois (réel et projeté), répartition par modèle, cumul, série quotidienne, classement complet des modèles.",
+          "Projections 2030 : quatre abaques de croissance annuelle (utilisateurs, tokens par utilisateur, intensité par token) appliqués à l'atterrissage de l'année, modifiables, avec graphique et cumul 2027–2030.",
           "Calcul : formules, réglages globaux et paramètres par modèle (prix, convention, e_O, facteurs).",
           "Démonstration : pour un modèle, le calcul déroulé étape par étape sur l'année choisie (formule, puis valeurs, jusqu'au CO₂e).",
           "Contrôles : C1 à C6.", "Méthodologie : sources et choix de méthode.", "Données : l'export collé et les colonnes calculées.",
           "Interne et Listes : calculs intermédiaires et listes de choix, à ne pas modifier."]:
     wsH.cell(r, 3, '• ' + t).font = f(10); r += 1
+
+# ---------- Projections 2030 (abaques de croissance) ----------
+ABQ = [('A', 'Sobriété', '3F9A5F', [.05]*4, [.15]*4, [-.15]*4),
+       ('B', 'Central', '2A2AD0', [.10]*4, [.40]*4, [-.20]*4),
+       ('C', 'Agentique généralisé', 'F07662', [.15, .12, .08, .05], [1.0, .70, .50, .40], [-.20, -.20, -.18, -.15]),
+       ('D', 'Budget plafonné', 'D99A00', [.10]*4, [.30]*4, [-.20]*4)]
+ABQ_Y = [2027, 2028, 2029, 2030]
+title(wsP, 'Projections annuelles jusqu\'en 2030', "Abaques de croissance : CO₂e(N) = CO₂e(N−1) × (1 + u) × (1 + t) × (1 + i), avec u l'évolution des utilisateurs actifs, t celle des tokens par utilisateur, i celle de l'intensité par token.")
+setw(wsP, {'B': 26, 'C': 16, 'D': 16, 'E': 16, 'F': 16, 'G': 16, 'H': 16, 'I': 14, 'J': 16})
+section(wsP, 'B5', 'Base', 5)
+cellv(wsP, 'B6', 'Année de base', font=f(10, True)); cellv(wsP, 'C6', '=S_An', '0', align=Alignment(horizontal='right'))
+note(wsP, 'D6', "← année choisie dans Synthèse (cellule C6) ; base attendue : la dernière année des données")
+cellv(wsP, 'B7', 'CO₂e de la base (kg)', font=f(10, True)); cellv(wsP, 'C7', '=S_Land', F_KG0)
+cellv(wsP, 'D7', '=IF(S_Cur,"atterrissage au 31 décembre (rythme des "&P_N&" derniers jours, comme Synthèse)","bilan réel de l\'année")', font=f(9, color=MUTED))
+cellv(wsP, 'B8', 'Tokens éq. output (base)', font=f(10, True)); cellv(wsP, 'C8', '=IF(S_YTD>0,S_TO*S_Land/S_YTD,S_TO)', F_INT)
+note(wsP, 'D8', "tokens de l'année, extrapolés au 31 décembre au même rythme que le CO₂e")
+cellv(wsP, 'B9', 'Utilisateurs actifs (base)', font=f(10, True)); inp(wsP, 'C9', None, F_INT)
+note(wsP, 'D9', "← facultatif : nombre d'utilisateurs distincts de l'année (vue Synthèse du tableau HTML), pour le détail par utilisateur")
+cellv(wsP, 'B10', 'Abaque affiché', font=f(10, True)); inp(wsP, 'C10', 'B'); wsP['C10'].alignment = Alignment(horizontal='center')
+note(wsP, 'D10', "← A, B, C ou D (B : central, recommandé pour une première modélisation)")
+dv = DataValidation(type='list', formula1='"A,B,C,D"', allow_blank=False); wsP.add_data_validation(dv); dv.add('C10')
+name('A_Sel', "'Projections 2030'!$C$10"); name('A_Tok', "'Projections 2030'!$C$8"); name('A_U', "'Projections 2030'!$C$9")
+section(wsP, 'B12', 'Hypothèses : évolution annuelle par rapport à l\'année précédente', 6)
+head(wsP, 13, 2, ['Abaque', 'Levier'] + [str(y) for y in ABQ_Y])
+F_RATE = '+0%;-0%;0%'
+for a, (k, nm, col, u, t, i) in enumerate(ABQ):
+    r0 = 14 + 4 * a
+    cellv(wsP, f'B{r0}', f'{k} · {nm}', font=f(10, True, col))
+    for j, (lab, vals) in enumerate([('u · utilisateurs actifs', u), ('t · tokens par utilisateur', t), ('i · intensité par token', i)]):
+        cellv(wsP, f'C{r0 + j}', lab, font=f(10))
+        for c, v in enumerate(vals): inp(wsP, f'{"DEFG"[c]}{r0 + j}', v, F_RATE)
+    cellv(wsP, f'C{r0 + 3}', 'effet combiné', font=f(10, True))
+    for c in range(4):
+        L_ = "DEFG"[c]; cellv(wsP, f'{L_}{r0 + 3}', f'=(1+{L_}{r0})*(1+{L_}{r0 + 1})*(1+{L_}{r0 + 2})-1', F_DPCT, f(10, True))
+    for cc in 'BCDEFG': wsP[f'{cc}{r0 + 3}'].border = Border(bottom=Side(style='hair', color=LINE))
+note(wsP, 'B30', "Intensité à 0 % = facteurs d'émission figés, comme dans le reste du classeur. Les années avant 2027 ne sont pas projetées : si la base est antérieure à 2026, 2027 part directement de la base.")
+section(wsP, 'B32', 'Projections', 9)
+head(wsP, 33, 2, ['Année'] + [f'{k} · {nm} (kgCO₂e)' for k, nm, *_ in ABQ] + ['Abaque affiché (kgCO₂e)', 'Tokens éq. output', 'Utilisateurs', 'gCO₂e / M tokens'])
+wsP.row_dimensions[33].height = 30
+cellv(wsP, 'B34', '=S_An', '0', f(10, True))
+for c in range(4): cellv(wsP, f'{"CDEF"[c]}34', '=S_Land', F_KG0, f(10, True))
+cellv(wsP, 'G34', '=S_Land', F_KG0, f(10, True, NAVY)); cellv(wsP, 'H34', '=A_Tok', F_INT, f(10, True)); cellv(wsP, 'I34', '=IF(ISNUMBER(A_U),A_U,"")', F_INT, f(10, True))
+cellv(wsP, 'J34', '=IF(H34>0,G34*1000/(H34/1000000),"")', '#,##0', f(10, True))
+for n, y in enumerate(ABQ_Y):
+    r = 35 + n; p = r - 1
+    cellv(wsP, f'B{r}', y, '0')
+    for a in range(4):
+        c = "CDEF"[a]; cr = 17 + 4 * a
+        cellv(wsP, f'{c}{r}', f'=IF($B{r}<=S_An,"",IF(ISNUMBER({c}{p}),{c}{p},S_Land)*(1+INDEX($D${cr}:$G${cr},$B{r}-2026)))', F_KG0)
+    sel_row = 'INDEX($D$14:$G$29,4*(CODE(A_Sel)-65)+{k},$B'+str(r)+'-2026)'
+    cellv(wsP, f'G{r}', f'=IF($B{r}<=S_An,"",CHOOSE(CODE(A_Sel)-64,C{r},D{r},E{r},F{r}))', F_KG0, f(10, True, NAVY))
+    cellv(wsP, f'H{r}', f'=IF($B{r}<=S_An,"",IF(ISNUMBER(H{p}),H{p},A_Tok)*(1+{sel_row.format(k=1)})*(1+{sel_row.format(k=2)}))', F_INT)
+    cellv(wsP, f'I{r}', f'=IF(OR($B{r}<=S_An,NOT(ISNUMBER(A_U))),"",IF(ISNUMBER(I{p}),I{p},A_U)*(1+{sel_row.format(k=1)}))', F_INT)
+    cellv(wsP, f'J{r}', f'=IF(N(H{r})>0,G{r}*1000/(H{r}/1000000),"")', '#,##0')
+cellv(wsP, 'B39', 'Cumul 2027–2030', font=f(10, True))
+for c in 'CDEFGH': cellv(wsP, f'{c}39', f'=SUM({c}35:{c}38)', F_INT if c == 'H' else F_KG0, f(10, True))
+for c in 'BCDEFGHIJ': wsP[f'{c}39'].border = Border(top=thin)
+para(wsP, 41, 2, '="Abaque "&A_Sel&" : "&' + txt_kg('G38') + '&" en 2030, soit ×"&FIXED(IF(S_Land>0,G38/S_Land,0),1)&" par rapport à "&S_An&" ; cumul 2027–2030 : "&' + txt_kg('G39') + '&". Fourchette entre abaques en 2030 : "&' + txt_kg('MIN(C38:F38)') + '&" à "&' + txt_kg('MAX(C38:F38)') + '&"."', 9, 32, 10, INK2, True)
+ch = LineChart()
+ch.add_data(Reference(wsP, min_col=3, max_col=6, min_row=33, max_row=38), titles_from_data=True)
+ch.set_categories(Reference(wsP, min_col=2, min_row=34, max_row=38))
+for s, (k, nm, col, *_) in zip(ch.series, ABQ): color_series(s, col, line=True, width=28575 if k == 'B' else 19050, dash=None if k == 'B' else 'dash')
+style_chart(ch, 22, 9, '#,##0')
+ch.title = 'CO₂e annuel par abaque (kgCO₂e)'
+wsP.add_chart(ch, 'L5')
+section(wsP, 'B43', 'Sur quoi s\'appuient les abaques', 9)
+SRC_A = ["Hypothèses de travail pour une première modélisation : aucune source publique ne projette l'usage de Copilot à 2030.",
+         "A · Sobriété : parc déjà largement équipé (Gartner, avril 2024 : 75 % des développeurs en entreprise utiliseront un assistant de code IA d'ici 2028), usage par personne qui se stabilise, gouvernance des coûts.",
+         "B · Central : les utilisateurs occasionnels deviennent réguliers (Gartner, juin 2026) ; consommation électrique des serveurs IA en hausse d'environ 30 %/an et gains d'efficacité (AIE, Energy and AI, 2025).",
+         "C · Agentique généralisé : tokens par utilisateur ×18 et coût médian ×16 entre août 2025 et mai 2026, jusqu'à 35 % des PR ouvertes par des agents (Jellyfish, S1 2026), avec un ralentissement après 2027.",
+         "D · Budget plafonné : sans gouvernance, le coût de l'IA de code dépasserait le salaire moyen d'un développeur d'ici 2028 (Gartner, juin 2026) ; ici la dépense par utilisateur est encadrée et le volume ne croît qu'avec la baisse du prix par token.",
+         "Limites : la baisse de l'intensité par token est l'hypothèse la plus fragile ; les tokens de la base sont extrapolés au rythme du CO₂e ; l'écart entre abaques donne l'incertitude de croissance. Le tableau HTML (onglet Projections 2030) détaille les liens vers les sources."]
+for n, t in enumerate(SRC_A): para(wsP, 44 + n, 2, t, 9, 30, 9, INK2 if n else MUTED)
+wsP.freeze_panes = 'A5'
 
 wsI.sheet_state = 'visible'
 wsL.sheet_state = 'hidden'
