@@ -2527,10 +2527,26 @@ function exportModelParams(){
   deliver("copilot-carbone-parametres-modeles.xlsx", tsv, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bin);
 }
 // bin (facultatif) : contenu binaire téléchargé à la place du texte ; le texte reste proposé en copie (tableau à coller dans Excel)
-function deliver(name, text, type, bin){
+// Téléchargement : dans la visionneuse claude.ai, via la capacité « downloads » (le visiteur confirme) ; hors ligne, lien de téléchargement classique
+let DL=null; try{ if (window.claude && typeof window.claude.use==="function") DL=window.claude.use("downloads").catch(()=>null); }catch(e){ DL=null; }
+async function deliver(name, text, type, bin){
+  const dl = DL ? await DL : null;
+  if (!dl){ deliverLocal(name, text, type, bin); return; }
+  try{
+    await dl.save({filename:name, data: bin ? new Blob([bin]) : (type==="text/csv" ? "\ufeff"+text : text)});
+    $("copyWrap").hidden=true; setDlMsg(L(`${name} : fichier enregistré.`,`${name}: file saved.`));
+  }catch(e){
+    const c=e&&e.code;
+    if (c==="declined") setDlMsg(L(`${name} : enregistrement annulé.`,`${name}: save cancelled.`));
+    else if (c==="rate_limited") setDlMsg(L(`${name} : une demande d'enregistrement est déjà ouverte, réessayez dans un instant.`,`${name}: a save prompt is already open, try again in a moment.`));
+    else deliverLocal(name, text, type, bin);
+  }
+}
+function setDlMsg(t){ const cw=$("copyWrap"); if (UI.tab!=="empreinte") $("v-"+UI.tab).append(cw); cw.hidden=false; $("copyBox").hidden=true; $("copyMsg").textContent=t; }
+function deliverLocal(name, text, type, bin){
   try{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([bin ? bin : type==="text/csv"?"\ufeff"+text:text],{type})); a.download=name; document.body.append(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }catch(e){}
   const cw=$("copyWrap"); if (UI.tab!=="empreinte") $("v-"+UI.tab).append(cw);
-  cw.hidden=false; $("copyMsg").textContent = bin ? L(`${name} : si le téléchargement ne démarre pas, copiez le tableau ci-dessous et collez-le dans Excel.`,`${name}: if the download does not start, copy the table below and paste it into Excel.`) : L(`${name} : si le téléchargement ne démarre pas, copiez le contenu ci-dessous.`,`${name}: if the download does not start, copy the content below.`); $("copyBox").value=text;
+  cw.hidden=false; $("copyBox").hidden=false; $("copyMsg").textContent = bin ? L(`${name} : si le téléchargement ne démarre pas, copiez le tableau ci-dessous et collez-le dans Excel.`,`${name}: if the download does not start, copy the table below and paste it into Excel.`) : L(`${name} : si le téléchargement ne démarre pas, copiez le contenu ci-dessous.`,`${name}: if the download does not start, copy the content below.`); $("copyBox").value=text;
   try{ navigator.clipboard.writeText(text).then(()=>{$("copyMsg").textContent = bin ? L(`${name} : tableau aussi copié dans le presse-papiers, prêt à coller dans Excel.`,`${name}: table also copied to the clipboard, ready to paste into Excel.`) : L(`${name} : contenu aussi copié dans le presse-papiers.`,`${name}: content also copied to the clipboard.`);}).catch(()=>{}); }catch(e){}
 }
 
