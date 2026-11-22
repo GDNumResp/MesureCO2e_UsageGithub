@@ -126,19 +126,19 @@ wb.move_sheet("Mode d'emploi", offset=-(len(wb.sheetnames) - 1))  # premier ongl
 
 # ---------- Listes ----------
 FE_SCEN = [
-    ('France (2020, EEA)', 51.1, "EEA, défaut du Calculateur de Boris"),
-    ('Azure, datacenters USA (2023)', 352.8, "arXiv 2505.09598, repris dans le Calculateur de Boris"),
+    ('France (2020, EEA)', 51.1, "EEA, défaut d'EcoLogits"),
+    ('Azure, datacenters USA (2023)', 352.8, "arXiv 2505.09598, repris par EcoLogits"),
     ('Union européenne (2025, IEA)', 170, "IEA, Electricity 2026, intensité CO₂ de la production"),
     ('Monde (2025, IEA)', 435, "IEA, Electricity 2026, intensité CO₂ de la production"),
     ('USA (2021, OWID)', 379, "Our World in Data (pas de valeur IEA publique)"),
-    ('Monde (EcoLogits)', 590.478, "Mix mondial EcoLogits, Calculateur de Boris"),
+    ('Monde (EcoLogits)', 590.478, "Mix mondial EcoLogits"),
     ('Personnalisé', None, "Valeur saisie dans Calcul"),
 ]
 wsL['A1'] = 'Mix électrique'; wsL['B1'] = 'gCO₂e/kWh'; wsL['C1'] = 'Source'
 for i, (n, v, s) in enumerate(FE_SCEN, start=2):
     wsL.cell(i, 1, n); wsL.cell(i, 2, v); wsL.cell(i, 3, s)
 name('L_MixNom', "Listes!$A$2:$A$8"); name('L_MixVal', "Listes!$B$2:$B$8"); name('L_MixSrc', "Listes!$C$2:$C$8")
-wsL['E1'] = 'Source des facteurs'; wsL['E2'] = 'Table fournie'; wsL['E3'] = 'Calculateur de Boris'
+wsL['E1'] = 'Source des facteurs'; wsL['E2'] = 'Table fournie'; wsL['E3'] = 'EcoLogits'
 wsL['F1'] = 'Oui/Non'; wsL['F2'] = 'Oui'; wsL['F3'] = 'Non'
 wsL['G1'] = 'Convention'; wsL['G2'] = 'Inclusive'; wsL['G3'] = 'Mixte'; wsL['G4'] = 'Exclusive'
 wsL['I1'] = 'Mois'
@@ -274,11 +274,11 @@ for nm, c in [('D_Date', 'date'), ('D_Prod', 'product'), ('D_I', 'input'), ('D_O
 title(wsC, 'Calcul', 'Formules, paramètres globaux et paramètres par modèle. Les cellules jaunes sont modifiables ; tout le classeur se recalcule.')
 section(wsC, 'B5', 'Réglages généraux', 4)
 SET = [
-    ('C6', 'Source des facteurs d\'émission', 'Table fournie', None, 'P_Source', "« Table fournie » = votre table kgCO₂e/token (23/10/2026). Les modèles absents de la table passent par le Calculateur de Boris."),
-    ('C7', 'Mix électrique (Calculateur de Boris)', 'France (2020, EEA)', None, 'P_MixNom', "Sert au calcul des modèles absents de la table, et à la vue de sensibilité C6."),
+    ('C6', 'Source des facteurs d\'émission', 'Table fournie', None, 'P_Source', "« Table fournie » = votre table kgCO₂e/token (23/10/2026). Les modèles absents de la table passent par le EcoLogits."),
+    ('C7', 'Mix électrique (EcoLogits)', 'France (2020, EEA)', None, 'P_MixNom', "Sert au calcul des modèles absents de la table, et à la vue de sensibilité C6."),
     ('C8', 'Mix personnalisé (gCO₂e/kWh)', 300, '0.0', 'P_MixPerso', "Utilisé seulement si le mix choisi est « Personnalisé »."),
     ('C9', 'Mix retenu (gCO₂e/kWh)', '=IF(P_MixNom="Personnalisé",P_MixPerso,INDEX(L_MixVal,MATCH(P_MixNom,L_MixNom,0)))', '0.0', 'P_Mix', None),
-    ('C10', 'Inclure la fabrication (scope 3)', 'Oui', None, 'P_Fab', "Le Calculateur de Boris ajoute la fabrication du matériel par token. Votre méthode l'exclut : mettre « Non » pour s'y conformer."),
+    ('C10', 'Inclure la fabrication (scope 3)', 'Oui', None, 'P_Fab', "Le EcoLogits ajoute la fabrication du matériel par token. Votre méthode l'exclut : mettre « Non » pour s'y conformer."),
     ('C11', "Fourchette d'incertitude basse (×)", 0.5, '0.00', 'P_Lo', "Multiplicateur appliqué au résultat central pour la borne basse."),
     ('C12', "Fourchette d'incertitude haute (×)", 2, '0.00', 'P_Hi', "Multiplicateur appliqué au résultat central pour la borne haute."),
     ('C13', 'Projection : fenêtre (jours)', 28, '0', 'P_N', "Rythme quotidien moyen des N derniers jours de données, prolongé jusqu'au 31 décembre."),
@@ -306,7 +306,7 @@ FX = [
     ('Tokens équivalent output', 'T_O = F·s_I + CR·s_CR + CW·s_CW + O'),
     ('Énergie (kWh)', 'E = T_O × e_O × PUE / 1000'),
     ('Empreinte (kgCO₂e)', 'CO₂e = T_O × FE_token'),
-    ('FE_token calculé (Calculateur de Boris)', 'FE = e_O × PUE × FE_mix / 10⁶ + fab'),
+    ('FE_token calculé (EcoLogits)', 'FE = e_O × PUE × FE_mix / 10⁶ + fab'),
 ]
 for i, (a, b) in enumerate(FX):
     cellv(wsC, f'B{17 + i}', a); cellv(wsC, f'C{17 + i}', b, font=Font(name='Consolas', size=10, color=INK))
@@ -367,7 +367,7 @@ for i in range(NMOD + NBLANK):
     cellv(wsC, C('sCW'), f'=IF({B}="","",IF(N({PO})>0,IF({PCW}="",{PI},{PCW})/{PO},0.25))', '0.000')
     cellv(wsC, C('FEC'), f'=IF({B}="","",{C("eO")}*{C("PUE")}*P_Mix/1000000+IF(P_Fab="Oui",{C("Fab")},0))', F_SCI)
     cellv(wsC, C('FE'), f'=IF({B}="","",IF({C("FEF")}<>"",{C("FEF")},IF(AND(P_Source="Table fournie",{C("FET")}<>""),{C("FET")},{C("FEC")})))', F_SCI, f(10, True, NAVY))
-    cellv(wsC, C('Src'), f'=IF({B}="","",IF({C("FEF")}<>"","Forcé",IF(AND(P_Source="Table fournie",{C("FET")}<>""),IF({C("Stat")}="H","Table (hypothèse)","Table (sourcé)"),"Calculateur de Boris")))', font=f(10, color=MUTED))
+    cellv(wsC, C('Src'), f'=IF({B}="","",IF({C("FEF")}<>"","Forcé",IF(AND(P_Source="Table fournie",{C("FET")}<>""),IF({C("Stat")}="H","Table (hypothèse)","Table (sourcé)"),"EcoLogits")))', font=f(10, color=MUTED))
     for k in MC:
         wsC[C(k)].border = Border(bottom=Side(style='hair', color=LINE))
 dv = DataValidation(type='list', formula1='=Listes!$G$2:$G$4', allow_blank=True); wsC.add_data_validation(dv); dv.add(f'{MC["Force"]}{M0}:{MC["Force"]}{M1}')
@@ -489,11 +489,11 @@ section(wsK, 'B36', 'C6 · Sensibilité (année affichée)', 4)
 TOY = 'I_TO'
 C6 = [
     ('Résultat central', '=SUM(I_CO2)'),
-    ('Tout au Calculateur de Boris, mix retenu', f'=SUMPRODUCT({TOY},M_FEC)'),
-    ('Calculateur de Boris, France (2020, EEA) 51,1 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*51.1/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
-    ('Calculateur de Boris, Union européenne (2025, IEA) 170 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*170/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
-    ('Calculateur de Boris, Monde (2025, IEA) 435 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*435/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
-    ('Calculateur de Boris, mix retenu, sans fabrication', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*P_Mix/1000000'),
+    ('Tout au EcoLogits, mix retenu', f'=SUMPRODUCT({TOY},M_FEC)'),
+    ('EcoLogits, France (2020, EEA) 51,1 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*51.1/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
+    ('EcoLogits, Union européenne (2025, IEA) 170 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*170/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
+    ('EcoLogits, Monde (2025, IEA) 435 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*435/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
+    ('EcoLogits, mix retenu, sans fabrication', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*P_Mix/1000000'),
     ('Fourchette basse (résultat central × basse)', '=C37*P_Lo'),
     ('Fourchette haute (résultat central × haute)', '=C37*P_Hi'),
 ]
@@ -682,14 +682,14 @@ xrow('T_O', '= F·s_I + CR·s_CR + CW·s_CW + O')
 xrow('', G(f'"= "&{ttok("X_F")}&" × "&{tnum("X_sI")}&" + "&{ttok("X_CR")}&" × "&{tnum("X_sCR")}&" + "&{ttok("X_CW")}&" × "&{tnum("X_sCW")}&" + "&{ttok("X_O")}'), G('X_TO'), F_INT, 'tokens', True, 30)
 
 xstep(6, 'Énergie', None)
-para(wsX, xr - 0, 2, '=IF(X_Row="","","e_O : énergie par token généré (GPU et serveur, Wh/token), scénario EcoLogits « "&X_Scen&" » du Calculateur de Boris. PUE : efficacité du datacenter. La division par 1 000 convertit les Wh en kWh. L\'énergie n\'entre dans le CO₂e que lorsque FE_token vient du Calculateur de Boris.")', 4, 30, 9, INK2); xr += 1
+para(wsX, xr - 0, 2, '=IF(X_Row="","","e_O : énergie par token généré (GPU et serveur, Wh/token), scénario EcoLogits « "&X_Scen&" ». PUE : efficacité du datacenter. La division par 1 000 convertit les Wh en kWh. L\'énergie n\'entre dans le CO₂e que lorsque FE_token vient d\'EcoLogits.")', 4, 30, 9, INK2); xr += 1
 xrow('E', '= T_O × e_O × PUE / 1000')
 xrow('', G(f'"= "&{ttok("X_TO")}&" × "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" / 1000"'), G('X_kWh'), '#,##0.00', 'kWh', True)
 
 xstep(7, "Facteur d'émission par token", None)
-para(wsX, xr, 2, '=IF(X_Row="","",IF(X_Src="Calculateur de Boris",IF(P_Source="Table fournie","Modèle absent de votre table de facteurs : facteur","Facteur")&" du Calculateur de Boris. FE_mix : mix électrique « "&P_MixNom&" » (gCO₂e/kWh). La division par 10⁶ convertit des Wh × g/kWh en kg"&IF(P_Fab="Oui"," ; fab ajoute la fabrication du matériel par token (kgCO₂e/token).","."),IF(X_Src="Forcé","Valeur forcée dans l\'onglet Calcul, en kgCO₂e par token équivalent output.","Valeur de la table de facteurs fournie ("&IF(X_Stat="H","hypothèse","sourcée")&"), en kgCO₂e par token équivalent output.")))', 4, 30, 9, INK2); xr += 1
-xrow('FE_token', G('IF(X_Src="Calculateur de Boris","= e_O × PUE × FE_mix / 10⁶"&IF(P_Fab="Oui"," + fab",""),"valeur de "&IF(X_Src="Forcé","Calcul (forcée)","la table de facteurs"))'))
-xrow('', G(f'IF(X_Src="Calculateur de Boris","= "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" × "&{tnum("P_Mix")}&" / 10⁶"&IF(P_Fab="Oui"," + "&{tsci("X_Fab")},""),"= "&{tsci("X_FE")})'), G('X_FE'), F_SCI, 'kgCO₂e/token', True)
+para(wsX, xr, 2, '=IF(X_Row="","",IF(X_Src="EcoLogits",IF(P_Source="Table fournie","Modèle absent de votre table de facteurs : facteur","Facteur")&" d\'EcoLogits. FE_mix : mix électrique « "&P_MixNom&" » (gCO₂e/kWh). La division par 10⁶ convertit des Wh × g/kWh en kg"&IF(P_Fab="Oui"," ; fab ajoute la fabrication du matériel par token (kgCO₂e/token).","."),IF(X_Src="Forcé","Valeur forcée dans l\'onglet Calcul, en kgCO₂e par token équivalent output.","Valeur de la table de facteurs fournie ("&IF(X_Stat="H","hypothèse","sourcée")&"), en kgCO₂e par token équivalent output.")))', 4, 30, 9, INK2); xr += 1
+xrow('FE_token', G('IF(X_Src="EcoLogits","= e_O × PUE × FE_mix / 10⁶"&IF(P_Fab="Oui"," + fab",""),"valeur de "&IF(X_Src="Forcé","Calcul (forcée)","la table de facteurs"))'))
+xrow('', G(f'IF(X_Src="EcoLogits","= "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" × "&{tnum("P_Mix")}&" / 10⁶"&IF(P_Fab="Oui"," + "&{tsci("X_Fab")},""),"= "&{tsci("X_FE")})'), G('X_FE'), F_SCI, 'kgCO₂e/token', True)
 
 xstep(8, 'Empreinte carbone', "Tokens équivalent output multipliés par le facteur d'émission par token.")
 xrow('CO₂e', '= T_O × FE_token')
@@ -876,7 +876,7 @@ MT = [
     ('Formules', "Input frais : F = max(0, I − δ·CR − ε·CW). Tokens équivalent output : T_O = F·s_I + CR·s_CR + CW·s_CW + O, chaque catégorie étant pondérée par son prix rapporté au prix de l'output du même modèle (s_I = P_I / P_O, etc.). Énergie : E = T_O × e_O × PUE / 1000. Empreinte : CO₂e = T_O × FE_token."),
     ('Convention de l\'input (δ, ε)', "GitHub ne documente pas si la colonne input de l'export contient déjà le cache. Pour chaque modèle : convention forcée dans Calcul, sinon C2 (si CR + CW dépasse I sur au moins une ligne, la convention est forcément exclusive), sinon C3 (rapprochement des coûts de la famille), sinon la convention documentée de l'API du fournisseur."),
     ('Prix', "Grille GitHub du 20 octobre 2026, palier standard, en dollars par million de tokens. Le palier long contexte n'est pas identifiable dans l'export. Quand le cache write n'est pas facturé mais que CW > 0, s_CW = s_I. Le prix du cache read de Claude Sonnet 5.5 était de 0,20 $ avant le 1er octobre 2026 : les lignes antérieures utilisent la ligne « [ancien tarif] ». Claude Opus 4.5, 4.6, 4.7 et Claude Sonnet 4.5 ne figurent plus dans la grille GitHub : leurs tarifs publics de l'API Anthropic sont utilisés. Les modèles « Auto: X » utilisent les paramètres de X."),
-    ('Facteurs d\'émission', "FE_token provient de votre table de facteurs en kgCO₂e par token (transmise le 23 octobre 2026), dont chaque ligne est marquée S (sourcé) ou H (hypothèse). Les modèles absents de la table sont calculés avec le Calculateur de Boris (carbon-footprint-modeling-tool de Boris Ruf, scénarios EcoLogits v2, commit 841bd2a du 9 novembre 2026) : FE = PUE (1,2) × énergie GPU + serveur par token × intensité du mix électrique + fabrication du matériel par token (scope 3). Les modèles de 2026 absents du Calculateur de Boris sont rattachés au scénario le plus proche (marqués « proxy »)."),
+    ('Facteurs d\'émission', "FE_token provient de votre table de facteurs en kgCO₂e par token (transmise le 23 octobre 2026), dont chaque ligne est marquée S (sourcé) ou H (hypothèse). Les modèles absents de la table sont calculés avec EcoLogits (carbon-footprint-modeling-tool de Boris Ruf, scénarios EcoLogits v2, commit 841bd2a du 9 novembre 2026) : FE = PUE (1,2) × énergie GPU + serveur par token × intensité du mix électrique + fabrication du matériel par token (scope 3). Les modèles de 2026 absents d'EcoLogits sont rattachés au scénario le plus proche (marqués « proxy »)."),
     ('Mix électrique', "Les régions d'hébergement des modèles ne sont pas publiées : le mix est traité en scénarios (France 2020 EEA 51,1 g/kWh par défaut ; UE 2025 IEA 170 ; Monde 2025 IEA 435 ; USA 2021 OWID 379 ; Azure USA 352,8 ; Monde EcoLogits 590,5). Les valeurs IEA portent sur le CO₂ seul."),
     ('Projection', "L'atterrissage de fin d'année prolonge le rythme quotidien moyen des N derniers jours de données (28 par défaut), ajusté du pourcentage choisi, jusqu'au 31 décembre. C'est une version simplifiée du modèle de projection du tableau HTML (utilisateurs × activité × usage × intensité) : Excel n'en reprend pas la fourchette P10–P90. La fourchette affichée applique au résultat central les multiplicateurs d'incertitude de Calcul (×0,5 et ×2 par défaut)."),
     ('Contrôles', "C1 complétude de l'import ; C2 cache supérieur à l'input ; C3 rapprochement des coûts par famille (rapport attendu entre 0,90 et 1,00) ; C4 cas particuliers ; C5 boucle globale des coûts ; C6 sensibilité aux facteurs et au mix. Les montants utilisés sont gross_amount (aic_gross_amount est vide dans les exports réels). Dans Excel, C3 est agrégé par famille sur toutes les lignes, alors que le tableau HTML teste les cinq lignes les plus discriminantes : la décision est la même sur l'export d'exemple."),

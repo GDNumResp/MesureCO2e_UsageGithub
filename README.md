@@ -23,7 +23,7 @@ Pour chaque ligne de l'export (un jour, un utilisateur, un modèle) :
 1. **Tokens d'entrée frais** : `F = I − δ·CR − ε·CW`, où `I` est l'input, `CR` le cache lu et `CW` le cache écrit. Les coefficients δ et ε dépendent de la convention de comptage du fournisseur (cache inclus ou non dans l'input).
 2. **Tokens équivalent-sortie** : `T_O = F·s_I + CR·s_CR + CW·s_CW + O`. Chaque type de token est ramené à un token de sortie selon le rapport de prix de la grille GitHub (`s_I = prix input / prix output`, etc.).
 3. **Énergie** : `E (kWh) = T_O × e_O × PUE / 1000`.
-4. **Carbone** : `CO2e (kg) = T_O × facteur d'émission par token` (table de facteurs par modèle). Une variante calcule `E × mix électrique + fabrication`, à partir des scénarios EcoLogits v2 du « Calculateur de Boris » (borisruf/carbon-footprint-modeling-tool). Les modèles absents de ce calculateur sont rapprochés d'un modèle proche.
+4. **Carbone** : `CO2e (kg) = T_O × facteur d'émission par token` (table de facteurs par modèle). Une variante calcule `E × mix électrique + fabrication`, à partir des scénarios EcoLogits v2 (borisruf/carbon-footprint-modeling-tool). Les modèles absents d'EcoLogits sont rapprochés d'un modèle proche.
 
 Des **contrôles** automatiques (C1 à C6) vérifient la cohérence de l'export : structure des tokens, convention de cache, rapprochement des coûts recalculés avec `gross_amount` (rapport attendu entre 0,90 et 1,00), et sensibilité aux hypothèses. Une **projection** jusqu'au 31 décembre donne l'atterrissage de l'année avec une fourchette.
 
@@ -56,7 +56,7 @@ cd tableau-carbone/source-excel
 ./make.sh empreinte-carbone-copilot-exemple ../exemple-export-copilot.csv      # classeur rempli
 ```
 
-- `build.py` écrit le classeur (onglets, formules, graphiques) à partir de `src.json` (grille de prix GitHub et familles de modèles) et `eco.json` (scénarios EcoLogits v2 du Calculateur de Boris).
+- `build.py` écrit le classeur (onglets, formules, graphiques) à partir de `src.json` (grille de prix GitHub et familles de modèles) et `eco.json` (scénarios EcoLogits v2, publiés par borisruf/carbon-footprint-modeling-tool).
 - LibreOffice recalcule le classeur, puis `inject.py` recopie les valeurs calculées dans le fichier d'origine, pour qu'il s'affiche rempli dès l'ouverture sans perdre les colonnes calculées du tableau Excel.
 
 Le tableau HTML n'a pas d'étape de construction : le fichier `.html` est lui-même la source. Après chaque modification, la copie `.txt` est mise à jour à l'identique.
