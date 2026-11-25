@@ -115,6 +115,7 @@ wsS = sheet('Synthèse', NAVY)
 wsE = sheet('Empreinte', NAVY)
 wsP = sheet('Projections 2030', NAVY)
 wsC = sheet('Calcul', '737885')
+wsR = sheet('Sources', '737885')
 wsX = sheet('Démonstration', '737885')
 wsK = sheet('Contrôles', '737885')
 wsM = sheet('Méthodologie', 'C9CCD4')
@@ -175,13 +176,13 @@ for m in SRC['models']:
     nm, fam, p, eco = m[0], m[1], m[2], m[3]
     u = UFE.get(norm(nm)); used_fe.add(norm(nm)) if u else None
     e = ECO[eco]
-    rows.append(dict(name=nm, fam=fam, p=p, before=None, eco=e, ecoexact=bool(m[4]), fe=u[1] if u else None, st=u[2] if u else None, api=len(m) > 6 and m[6]))
+    rows.append(dict(name=nm, fam=fam, p=p, before=None, eco=e, ecoexact=bool(m[4]), fe=u[1] if u else None, st=u[2] if u else None, tname=u[0] if u else None, api=len(m) > 6 and m[6]))
     if len(m) > 5 and m[5]:
         for until, ph in m[5]:
-            rows.append(dict(name=nm + ' [ancien tarif]', fam=fam, p=ph, before=until, eco=e, ecoexact=bool(m[4]), fe=u[1] if u else None, st=u[2] if u else None))
+            rows.append(dict(name=nm + ' [ancien tarif]', fam=fam, p=ph, before=until, eco=e, ecoexact=bool(m[4]), fe=u[1] if u else None, st=u[2] if u else None, tname=u[0] if u else None))
 for u in SRC['user']:
     if norm(u[0]) in used_fe: continue
-    rows.append(dict(name=u[0], fam='other', p=None, before=None, eco=ECO['gpt54'], ecoexact=False, fe=u[1], st=u[2]))
+    rows.append(dict(name=u[0], fam='other', p=None, before=None, eco=ECO['gpt54'], ecoexact=False, fe=u[1], st=u[2], tname=u[0]))
 rows.append(dict(name='(Autre modèle)', fam='other', p=None, before=None, eco=ECO['gpt54'], ecoexact=False, fe=None, st=None))
 NMOD = len(rows); NBLANK = 25
 M0 = 30                       # première ligne de données de la table des modèles (Calcul)
@@ -313,7 +314,7 @@ for i, (a, b) in enumerate(FX):
 note(wsC, 'B23', "I, O, CR, CW : colonnes input, output, cache_read, cache_write. δ, ε : convention de l'input (1 = l'input contient déjà le cache). s_I, s_CR, s_CW : prix rapportés au prix de l'output. Les formules sont dans les colonnes bleues de l'onglet Données.")
 
 section(wsC, f'B{M0 - 3}', 'Paramètres par modèle', 25)
-note(wsC, f'B{M0 - 2}', "Grille GitHub du 20/10/2026 ($ par million de tokens). Pour un nouveau modèle, remplissez une ligne vide en bas de la table (au minimum Modèle, prix et e_O). Les noms « Auto: X » utilisent la ligne de X. « (Autre modèle) » sert aux modèles inconnus.")
+note(wsC, f'B{M0 - 2}', "Source de chaque facteur : cliquez sur « Source du FE » (dernière colonne) ou ouvrez l'onglet Sources. Grille GitHub du 20/10/2026 ($ par million de tokens). Pour un nouveau modèle, remplissez une ligne vide en bas de la table (au minimum Modèle, prix et e_O). Les noms « Auto: X » utilisent la ligne de X. « (Autre modèle) » sert aux modèles inconnus.")
 MH = ['Modèle', 'Famille', 'Convention forcée', 'Convention appliquée', 'Origine', 'δ', 'ε', 'P_I', 'P_CR', 'P_CW', 'P_O', 'Tarif valable avant le',
       's_I', 's_CR', 's_CW', 'Scénario EcoLogits', 'e_O (Wh/token)', 'PUE', 'fab (kgCO₂e/token)', 'FE table (kgCO₂e/token)', 'S/H',
       'FE forcé (kgCO₂e/token)', 'FE calculé (kgCO₂e/token)', 'FE retenu (kgCO₂e/token)', 'Source du FE']
@@ -323,6 +324,7 @@ wsC.row_dimensions[M0 - 1].height = 42
 MC = {k: CL(2 + i) for i, k in enumerate(['Nom', 'Fam', 'Force', 'Conv', 'Orig', 'Delta', 'Eps', 'PI', 'PCR', 'PCW', 'PO', 'Avant', 'sI', 'sCR', 'sCW', 'Scen', 'eO', 'PUE', 'Fab', 'FET', 'Stat', 'FEF', 'FEC', 'FE', 'Src'])}
 for k, c in MC.items():
     name('M_' + k, f"Calcul!${c}${M0}:${c}${M1}")
+SR0 = 16  # première ligne de la table des sources (onglet Sources), alignée sur la table des modèles
 K0 = 62  # première ligne de la table par modèle dans Contrôles (alignée sur la table des modèles)
 def kref(col, r): return f"'Contrôles'!${col}${r - M0 + K0}"
 for i in range(NMOD + NBLANK):
@@ -367,7 +369,7 @@ for i in range(NMOD + NBLANK):
     cellv(wsC, C('sCW'), f'=IF({B}="","",IF(N({PO})>0,IF({PCW}="",{PI},{PCW})/{PO},0.25))', '0.000')
     cellv(wsC, C('FEC'), f'=IF({B}="","",{C("eO")}*{C("PUE")}*P_Mix/1000000+IF(P_Fab="Oui",{C("Fab")},0))', F_SCI)
     cellv(wsC, C('FE'), f'=IF({B}="","",IF({C("FEF")}<>"",{C("FEF")},IF(AND(P_Source="Table fournie",{C("FET")}<>""),{C("FET")},{C("FEC")})))', F_SCI, f(10, True, NAVY))
-    cellv(wsC, C('Src'), f'=IF({B}="","",IF({C("FEF")}<>"","Forcé",IF(AND(P_Source="Table fournie",{C("FET")}<>""),IF({C("Stat")}="H","Table (hypothèse)","Table (sourcé)"),"EcoLogits")))', font=f(10, color=MUTED))
+    cellv(wsC, C('Src'), f'=IF({B}="","",HYPERLINK("#\'Sources\'!B{r - M0 + SR0}",IF({C("FEF")}<>"","Forcé",IF(AND(P_Source="Table fournie",{C("FET")}<>""),IF({C("Stat")}="H","Table (hypothèse)","Table (sourcé)"),"EcoLogits"))))', font=Font(name=FONT, size=10, color='0000CC', underline='single'))
     for k in MC:
         wsC[C(k)].border = Border(bottom=Side(style='hair', color=LINE))
 dv = DataValidation(type='list', formula1='=Listes!$G$2:$G$4', allow_blank=True); wsC.add_data_validation(dv); dv.add(f'{MC["Force"]}{M0}:{MC["Force"]}{M1}')
@@ -888,6 +890,65 @@ for h, t in MT:
     c = wsM.cell(r, 2, t); c.font = f(10); c.alignment = Alignment(wrap_text=True, vertical='top')
     wsM.row_dimensions[r].height = max(30, 15 * (len(t) // 135 + 1)); r += 2
 
+# ---------- Sources des facteurs ----------
+TOOL = 'https://borisruf.github.io/carbon-footprint-modeling-tool/?id='
+UFROM = SRC.get('user_from', {})
+title(wsR, 'Sources', "Origine de FE_token pour chaque ligne de la table des modèles de l'onglet Calcul. Les colonnes suivent les réglages de Calcul (source des facteurs, mix, valeurs forcées).")
+setw(wsR, {'B': 30, 'C': 13, 'D': 17, 'E': 70, 'F': 24, 'G': 26, 'H': 10, 'I': 20})
+section(wsR, 'B5', 'Références', 8)
+REFS = [
+    ("Votre table de facteurs kgCO₂e/token (« Fusion ligne à ligne », 23/10/2026)", "FE_token par défaut. Document interne, non diffusé : chaque ligne y porte sa référence.", None),
+    ("EcoLogits, méthodologie de l'inférence LLM (GenAI Impact)", "Méthode de calcul de e_O et du facteur de repli.", 'https://ecologits.ai/0.9/methodology/llm_inference/'),
+    ("carbon-footprint-modeling-tool (Boris Ruf)", "Scénarios EcoLogits v2 par modèle (énergie GPU + serveur par token, fabrication, PUE).", 'https://github.com/borisruf/carbon-footprint-modeling-tool'),
+    ("Mix électrique", '=P_MixNom&" : "&INDEX(L_MixSrc,MATCH(P_MixNom,L_MixNom,0))', None),
+    ("GitHub, Models and pricing for GitHub Copilot (20/10/2026)", "Grille tarifaire : ratios s_I, s_CR, s_CW.", 'https://docs.github.com/en/copilot'),
+]
+for i, (n, u, url) in enumerate(REFS):
+    r = 6 + i
+    if url: cellv(wsR, f'B{r}', f'=HYPERLINK("{url}","{n}")', font=Font(name=FONT, size=10, color='0000CC', underline='single'))
+    else: cellv(wsR, f'B{r}', n, font=f(10, True))
+    cellv(wsR, f'E{r}', u, font=f(10, color=INK2))
+para(wsR, 12, 2, "Types : « Table (sourcé) » = valeur de votre table marquée Source ; « Table (hypothèse) » = valeur de votre table recopiée d'un modèle voisin ; « EcoLogits » = calcul à partir du scénario EcoLogits (Exact = scénario du modèle, Proxy = scénario du modèle le plus proche) ; « Forcé » = valeur saisie dans Calcul. Les noms « Auto: X » utilisent la ligne de X. La dernière colonne compare au calcul EcoLogits : un écart supérieur à 10 dans un sens ou dans l'autre est à vérifier.", 8, 44, 9, MUTED)
+section(wsR, f'B{SR0 - 2}', 'Source de FE_token par modèle', 8)
+head(wsR, SR0 - 1, 2, ['Modèle', 'FE retenu (kgCO₂e/token)', 'Type de source', 'Origine du facteur', 'Lien', 'Énergie e_O : scénario EcoLogits', 'Exact / proxy', 'EcoLogits ÷ facteur'])
+wsR.row_dimensions[SR0 - 1].height = 30
+rowof = {d['tname']: M0 + i for i, d in enumerate(rows) if d.get('tname') and not d['before']}
+LINK = Font(name=FONT, size=10, color='0000CC', underline='single')
+for i in range(NMOD + NBLANK):
+    r = SR0 + i; c = M0 + i; d = rows[i] if i < NMOD else None
+    def M(k): return f"Calcul!${MC[k]}${c}"
+    B = M('Nom')
+    cellv(wsR, f'B{r}', f'=IF({B}="","",{B})', font=f(10, True))
+    cellv(wsR, f'C{r}', f'=IF({B}="","",{M("FE")})', F_SCI)
+    cellv(wsR, f'D{r}', f'=IF({B}="","",IF({M("FEF")}<>"","Forcé",IF(AND(P_Source="Table fournie",{M("FET")}<>""),IF({M("Stat")}="H","Table (hypothèse)","Table (sourcé)"),"EcoLogits")))')
+    tn = (d or {}).get('tname') or ''
+    fr = UFROM.get(tn, [])
+    tl = f'"Ligne « "&{B}&" » de votre table"' if not tn else f'"Ligne « {tn} » de votre table"'
+    htxt = (f'{tl}&", marquée Hypothèse : reprend la valeur sourcée de « {" » et « ".join(fr)} »."' if fr
+            else f'{tl}&", marquée Hypothèse : origine non documentée (aucune ligne sourcée de même valeur)."' if tn
+            else f'{tl}&", marquée Hypothèse."')
+    eco = '"Calcul EcoLogits, scénario « "&' + M('Scen') + '&" » : e_O × PUE × mix « "&P_MixNom&" »"&IF(P_Fab="Oui"," + fabrication du matériel","")&"."'
+    cellv(wsR, f'E{r}', f'=IF({B}="","",IF(D{r}="Forcé","Valeur forcée dans Calcul (colonne FE forcé).",IF(D{r}="Table (sourcé)",{tl}&" (23/10/2026), marquée Source.",IF(D{r}="Table (hypothèse)",{htxt},IF(AND(P_Source="Table fournie",{M("FET")}=""),"Absent de votre table. ","")&{eco}))))',
+          font=f(10, color=INK2), align=Alignment(wrap_text=True, vertical='top'))
+    eurl = TOOL + d['eco']['id'] if d else None
+    tgt = rowof.get(fr[0]) if fr else None
+    hl = f'HYPERLINK("#\'Sources\'!B{tgt - M0 + SR0}","Ligne « {fr[0]} »")' if tgt else '"—"'
+    el = f'HYPERLINK("{eurl}","Scénario EcoLogits")' if eurl else '"—"'
+    cellv(wsR, f'F{r}', f'=IF({B}="","",IF(D{r}="Table (sourcé)","Document interne",IF(D{r}="Table (hypothèse)",{hl},IF(D{r}="EcoLogits",{el},"—"))))', font=LINK if d else f())
+    if d: cellv(wsR, f'G{r}', f'=IF({B}="","",HYPERLINK("{eurl}",{M("Scen")}))', font=LINK)
+    else: cellv(wsR, f'G{r}', f'=IF({B}="","",{M("Scen")})')
+    cellv(wsR, f'H{r}', f'=IF({B}="","",IF(ISNUMBER(SEARCH("proxy",{M("Scen")})),"Proxy","Exact"))')
+    cellv(wsR, f'I{r}', f'=IF(OR({B}="",D{r}="EcoLogits",N(C{r})=0),"",{M("FEC")}/C{r})', '0.00')
+    for col in 'BCDEFGHI':
+        wsR[f'{col}{r}'].border = Border(bottom=Side(style='hair', color=LINE))
+        if col != 'E': wsR[f'{col}{r}'].alignment = Alignment(vertical='top', horizontal='right' if col in 'CI' else 'left')
+from openpyxl.formatting.rule import FormulaRule
+wsR.conditional_formatting.add(f'D{SR0}:D{SR0 + NMOD + NBLANK - 1}', FormulaRule(formula=[f'D{SR0}="Table (hypothèse)"'], font=Font(color='9A6700', bold=True)))
+wsR.conditional_formatting.add(f'D{SR0}:D{SR0 + NMOD + NBLANK - 1}', FormulaRule(formula=[f'D{SR0}="Table (sourcé)"'], font=Font(color='1E7B3C', bold=True)))
+wsR.conditional_formatting.add(f'H{SR0}:H{SR0 + NMOD + NBLANK - 1}', FormulaRule(formula=[f'H{SR0}="Proxy"'], font=Font(color='9A6700', bold=True)))
+wsR.conditional_formatting.add(f'I{SR0}:I{SR0 + NMOD + NBLANK - 1}', FormulaRule(formula=[f'AND(I{SR0}<>"",OR(I{SR0}>10,I{SR0}<0.1))'], font=Font(color='C0392B', bold=True), fill=PatternFill('solid', fgColor='FDECEA')))
+wsR.freeze_panes = f'C{SR0}'
+
 # ---------- Mode d'emploi ----------
 title(wsH, "Mode d'emploi", "Déclinaison Excel du tableau de bord « Empreinte carbone de GitHub Copilot ».")
 wsH.column_dimensions['B'].width = 4; wsH.column_dimensions['C'].width = 110
@@ -919,6 +980,7 @@ for t in ["Synthèse : indicateurs clés de l'année, tendance, graphique mensue
           "Empreinte : tableau mois par mois (réel et projeté), répartition par modèle, cumul, série quotidienne, classement complet des modèles.",
           "Projections 2030 : quatre abaques de croissance annuelle (utilisateurs, tokens par utilisateur, intensité par token) appliqués à l'année de base extrapolée sur 12 mois, modifiables, avec graphique et cumul 2027–2030.",
           "Calcul : formules, réglages globaux et paramètres par modèle (prix, convention, e_O, facteurs).",
+          "Sources : pour chaque modèle, l'origine de FE_token (votre table, ligne sourcée ou hypothèse, EcoLogits exact ou proxy, valeur forcée) avec le lien ou le type de document.",
           "Démonstration : pour un modèle, le calcul déroulé étape par étape sur l'année choisie (formule, puis valeurs, jusqu'au CO₂e).",
           "Contrôles : C1 à C6.", "Méthodologie : sources et choix de méthode.", "Données : l'export collé et les colonnes calculées.",
           "Interne et Listes : calculs intermédiaires et listes de choix, à ne pas modifier."]:

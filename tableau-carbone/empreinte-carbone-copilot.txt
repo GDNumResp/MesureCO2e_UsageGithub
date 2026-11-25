@@ -105,6 +105,11 @@ td.num,td .num{font-family:inherit;font-variant-numeric:tabular-nums}
 .tbl-wrap.scroll td{vertical-align:middle}
 td .nm{display:inline-block;max-width:15em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
 td .fl{display:inline-block;width:1.1em;margin-left:3px;font-size:10.5px;color:var(--muted);text-align:left}
+/* Sources des facteurs : badge-lien vers l'onglet Sources, lignes et liens */
+a.srcl{text-decoration:none;cursor:pointer} a.srcl .chip{cursor:pointer} a.srcl:hover .chip{box-shadow:inset 0 0 0 1px currentColor}
+#srcTable td{vertical-align:top} #srcTable td:first-child strong{white-space:nowrap} #srcTable td.lk{min-width:10em} #srcTable td.o{min-width:22em;max-width:34em;color:var(--ink-2)} #srcTable td .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+#srcTable tr.flash td{background:var(--accent-soft);transition:background .3s}
+#srcTable a{color:var(--accent)} .srcrefs li{margin:4px 0} .srcrefs a{color:var(--accent)}
 
 /* Facteurs par modèle */
 .fe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
@@ -291,7 +296,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:560px){ .filters .flt{width:100%} }
 html[lang=en] [data-lang=fr], html[lang=fr] [data-lang=en]{display:none}
 /* sans import : seuls Calcul et Méthodologie sont consultables, à côté de l'accueil */
-body:not(.has-data) #filtersWrap, body:not(.has-data) .view:not(#v-calcul):not(#v-methodologie), body:not(.has-data) .tabs [data-v=synthese], body:not(.has-data) .tabs [data-v=empreinte], body:not(.has-data) .tabs [data-v=controles], body:not(.has-data) .tabs [data-v=demo], body:not(.has-data) .tabs [data-v=proj2030], body:not(.has-data) .tabs .n{display:none !important}
+body:not(.has-data) #filtersWrap, body:not(.has-data) .view:not(#v-calcul):not(#v-sources):not(#v-methodologie), body:not(.has-data) .tabs [data-v=synthese], body:not(.has-data) .tabs [data-v=empreinte], body:not(.has-data) .tabs [data-v=controles], body:not(.has-data) .tabs [data-v=demo], body:not(.has-data) .tabs [data-v=proj2030], body:not(.has-data) .tabs .n{display:none !important}
 body.has-data .tabs [data-v=accueil], body.browse #emptyState{display:none !important}
 body.has-data #emptyState{display:none}
 .empty-state{padding:40px 24px;text-align:center}
@@ -391,7 +396,7 @@ body.has-data #emptyState{display:none}
   <section class="panel empty-state" id="emptyState">
     <h2>Aucune donnée pour l'instant</h2>
     <p class="small muted">Importez l'export « AI usage report » de GitHub Copilot au format CSV, avec le bouton « Importer l'extraction GitHub » ou par glisser-déposer. Le fichier reste dans votre navigateur.</p>
-    <p class="small muted">Sans import, les onglets Calcul et Méthodologie restent consultables : formules, grille tarifaire, facteurs d'émission et mix électriques.</p>
+    <p class="small muted">Sans import, les onglets Calcul, Sources et Méthodologie restent consultables : formules, grille tarifaire, facteurs d'émission, leurs sources et mix électriques.</p>
   </section>
 
   <nav class="tabs" role="tablist" aria-label="Vues">
@@ -400,9 +405,10 @@ body.has-data #emptyState{display:none}
     <button role="tab" id="tab-empreinte" data-v="empreinte" aria-selected="false"><span class="n">2</span>Empreinte</button>
     <button role="tab" id="tab-proj2030" data-v="proj2030" aria-selected="false"><span class="n">3</span>Projections 2030</button>
     <button role="tab" id="tab-calcul" data-v="calcul" aria-selected="false"><span class="n">4</span>Calcul</button>
-    <button role="tab" id="tab-demo" data-v="demo" aria-selected="false"><span class="n">5</span>Démonstration</button>
-    <button role="tab" id="tab-controles" data-v="controles" aria-selected="false"><span class="n">6</span>Contrôles <span id="ctlBadge"></span></button>
-    <button role="tab" id="tab-methodologie" data-v="methodologie" aria-selected="false"><span class="n">7</span>Méthodologie</button>
+    <button role="tab" id="tab-sources" data-v="sources" aria-selected="false"><span class="n">5</span>Sources</button>
+    <button role="tab" id="tab-demo" data-v="demo" aria-selected="false"><span class="n">6</span>Démonstration</button>
+    <button role="tab" id="tab-controles" data-v="controles" aria-selected="false"><span class="n">7</span>Contrôles <span id="ctlBadge"></span></button>
+    <button role="tab" id="tab-methodologie" data-v="methodologie" aria-selected="false"><span class="n">8</span>Méthodologie</button>
   </nav>
 
   <!-- 1. Empreinte -->
@@ -521,7 +527,7 @@ body.has-data #emptyState{display:none}
       <details><summary>Variables et fonctions disponibles</summary><div class="tbl-wrap" style="margin-top:10px"><table class="vars" id="varTable"></table></div></details>
     </section>
     <section class="panel">
-      <div class="panel-head"><div class="t"><h2>Paramètres par modèle</h2><p class="small muted">Valeur par défaut en clair, valeur modifiée surlignée. Videz un champ pour revenir à la valeur par défaut.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="expModels" type="button">Exporter en Excel</button><button class="btn" id="resetModels" type="button">Rétablir tous les paramètres</button></div></div>
+      <div class="panel-head"><div class="t"><h2>Paramètres par modèle</h2><p class="small muted">Valeur par défaut en clair, valeur modifiée surlignée. Videz un champ pour revenir à la valeur par défaut. Cliquez sur le badge sous FE_token pour voir sa source dans l'onglet Sources.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="expModels" type="button">Exporter en Excel</button><button class="btn" id="resetModels" type="button">Rétablir tous les paramètres</button></div></div>
       <div class="tbl-wrap edit" id="paramTable"></div>
     </section>
     <section class="panel">
@@ -553,6 +559,11 @@ body.has-data #emptyState{display:none}
       <div class="t"><h3>Contrôle a posteriori</h3><p class="small muted">Chaque méthode est rejouée sur les mois complets précédents, arrêtée au même jour du mois, puis comparée au total réel. L'ajustement en % n'y est pas appliqué. L'écart aide à choisir la méthode.</p></div>
       <div class="tbl-wrap" id="prBack"></div>
     </section>
+  </section>
+
+  <!-- Sources des facteurs -->
+  <section class="view" id="v-sources" role="tabpanel" aria-labelledby="tab-sources" hidden>
+    <div id="srcView" style="display:flex;flex-direction:column;gap:16px"></div>
   </section>
 
   <!-- Projections 2030 -->
@@ -686,14 +697,14 @@ body.has-data #emptyState{display:none}
         <li>Les ratios de prix reflètent aussi la marge, le stockage et la stratégie commerciale ; ils ne mesurent pas l'énergie.</li>
         <li>La remise automatique et le palier long contexte ne sont pas identifiables ligne par ligne.</li>
         <li>L'agrégation journalière masque la surface utilisée (IDE, CLI, agent) et la structure des sessions.</li>
-        <li>Plusieurs facteurs de la table sont des hypothèses ou des valeurs rondes ; ils sont signalés dans la vue Calcul.</li>
+        <li>Plusieurs facteurs de la table sont des hypothèses ou des valeurs rondes ; l'onglet Sources donne l'origine de chaque facteur et la valeur reprise pour chaque hypothèse.</li>
       </ul>
       <ul data-lang="en">
         <li>Results are orders of magnitude: energy per token, the electricity mix and the export convention are not published.</li>
         <li>Price ratios also reflect margin, storage and commercial strategy; they do not measure energy.</li>
         <li>The automatic discount and the long-context tier cannot be identified row by row.</li>
         <li>Daily aggregation hides the surface used (IDE, CLI, agent) and the session structure.</li>
-        <li>Several factors in the table are assumptions or round values; they are flagged in the Calculation view.</li>
+        <li>Several factors in the table are assumptions or round values; the Sources tab gives the origin of each factor and the value reused for each assumption.</li>
       </ul>
     </section>
     <section class="panel prose" id="m-src">
@@ -854,6 +865,11 @@ const USER_FE = [
   ["Gemini 4 Argon",4.69e-6,"H"],["GPT-5.4 nano",1.659e-8,"H"],["GPT-6 Astra",1e-8,"H"],["GPT-6 Sol",1e-8,"H"],["GPT-6.1 Sol",1e-8,"H"]
 ];
 const USER_FE_INDEX = new Map(USER_FE.map(([n,v,k])=>[normModel(n),{name:n,v,k}]));
+// Lignes « H » de la table : ligne sourcée dont la valeur est reprise (vérifié le 22/11/2026 ; [] = aucune ligne de même valeur)
+const USER_FE_FROM = {"Claude Opus 4.5":["Claude Opus 4.6"],"Claude Opus 5":["Claude Opus 4.8"],"Claude Opus 5.5":["Claude Opus 4.8"],"Claude Fable 5":["Claude Opus 4.8"],"Claude Fable 5.1":["Claude Opus 4.8"],
+  "Claude Opus 4.8 (fast mode) (preview)":["Claude Opus 4.8"],"Claude Sonnet 5":["Claude Sonnet 4.6"],"Claude Sonnet 5.5":["Claude Sonnet 4.6"],"Claude Haiku 5.5":["Claude Haiku 4.5"],
+  "Gemini 4 Argon":["Gemini 2.5-pro"],"gemini-2.5-pro-tts":["Gemini 2.5-pro"],"gemini-2.5-flash-tts":["gemini-2.5-flash-lite"],"GPT-5.4 nano":["GPT-5 nano"],"GPT-5.3-Codex":["GPT-5.6 Sol"],
+  "GPT-6 Sol":["GPT-5.6 Luna","GPT-6 Luna"],"GPT-6.1 Sol":["GPT-5.6 Luna","GPT-6 Luna"],"GPT-6 Astra":["GPT-5.6 Luna","GPT-6 Luna"],"Code Review model":["GPT-5.6 Luna","GPT-6 Luna"],"GPT-5.4 mini":[]};
 
 /* ---------- Lecture CSV ---------- */
 function parseCSV(text){
@@ -1251,7 +1267,8 @@ const frDate = d => d ? new Date(d+"T00:00:00Z").toLocaleDateString(LOC(),{day:"
 const frDay = d => new Date(d+"T00:00:00Z").toLocaleDateString(LOC(),{day:"numeric",month:"short",timeZone:"UTC"});
 function row(tag, cells, right=[]){ const tr=el("tr"); cells.forEach((c,i)=>tr.append(el(tag,{class:right[i]?"r":"",text:c}))); return tr; }
 function table(head, right, rows){ const t=el("table"); t.append(el("thead",{},row("th",head,right))); const b=el("tbody"); for (const r of rows) b.append(row("td",r,right)); t.append(b); return t; }
-const feChip = src => src==="table-S" ? chip("ok",L("Table · sourcé","Table · sourced")) : src==="table-H" ? chip("warn",L("Table · hypothèse","Table · assumption")) : src==="saisi" ? chip("accent",L("Saisi","Entered")) : chip("neutral",L("EcoLogits","EcoLogits"));
+// Badge court de la vue Calcul (le détail est dans l'onglet Sources)
+const feBadge = src => src==="table-S" ? chip("ok",L("Sourcé ›","Sourced ›")) : src==="table-H" ? chip("warn",L("Hypothèse ›","Assumption ›")) : src==="saisi" ? chip("accent",L("Saisi ›","Entered ›")) : chip("neutral","EcoLogits ›");
 
 /* ---------- Rendu ---------- */
 let CTL=null, ALL=null, RES=null, FROWS=null;
@@ -1266,7 +1283,7 @@ function variantRows(){
 }
 const sumVar=(arr,rows)=>{ let s=0; for (const r of rows) s+=arr[r._i]; return s; };
 // sans import : Calcul et Méthodologie sont rendus sur des données vides (grille, facteurs et formules restent consultables)
-function renderEmptyView(){ if (DATA.rows.length) return; compileAll(); CTL=runControls([]); ALL=[]; RES=[]; FROWS=[]; if (UI.tab==="calcul") renderCalcul(); else if (UI.tab==="methodologie") renderMethodo(); }
+function renderEmptyView(){ if (DATA.rows.length) return; compileAll(); CTL=runControls([]); ALL=[]; RES=[]; FROWS=[]; if (UI.tab==="calcul") renderCalcul(); else if (UI.tab==="sources") renderSources(); else if (UI.tab==="methodologie") renderMethodo(); }
 function renderAll(keepVariants){
   compileAll(); if (!keepVariants) VARG=null;
   if (!DATA.rows.length){ renderEmptyView(); return; }
@@ -1276,15 +1293,15 @@ function renderAll(keepVariants){
   refilter();
 }
 // Les vues sont recalculées à la demande : seule la vue affichée est rendue, les autres le seront à l'ouverture
-const DIRTY={synthese:true, empreinte:true, proj2030:true, calcul:true, demo:true, controles:true, methodologie:true};
+const DIRTY={synthese:true, empreinte:true, proj2030:true, calcul:true, sources:true, demo:true, controles:true, methodologie:true};
 function refilter(){
   dimButtons(); renderChips();
   FROWS = filtered(); const fs=new Set(FROWS); RES = ALL.filter(x=>fs.has(x.r)); RES.negF=ALL.negF; hideTip();
-  renderSource(); DIRTY.synthese=true; DIRTY.empreinte=true; DIRTY.calcul=true; DIRTY.demo=true; DIRTY.proj2030=true; renderVisible();
+  renderSource(); DIRTY.synthese=true; DIRTY.empreinte=true; DIRTY.calcul=true; DIRTY.sources=true; DIRTY.demo=true; DIRTY.proj2030=true; renderVisible();
 }
 function renderVisible(){
   const v=UI.tab; if (!DIRTY[v]) return false; DIRTY[v]=false;
-  if (v==="synthese") renderSynth(); else if (v==="empreinte") renderEmpreinte(); else if (v==="calcul") renderCalcul(); else if (v==="demo") renderDemo(); else if (v==="proj2030") renderAbq(); else if (v==="controles") renderSens(); else renderMethodo();
+  if (v==="synthese") renderSynth(); else if (v==="empreinte") renderEmpreinte(); else if (v==="calcul") renderCalcul(); else if (v==="sources") renderSources(); else if (v==="demo") renderDemo(); else if (v==="proj2030") renderAbq(); else if (v==="controles") renderSens(); else renderMethodo();
   return true;
 }
 function setStatus(kind, msg, label){ $("srcStatus").replaceChildren(chip(kind, label || (kind==="ok"?L("Importé","Imported"):kind==="warn"?L("Exemple","Sample"):L("Erreur","Error"))), el("span",{class:"ink2 small",text:msg})); }
@@ -2107,17 +2124,115 @@ function renderParamTable(){
     for (const [k,lab] of [["sI","s_I"],["sCR","s_CR"],["sCW","s_CW"]]){ const td=el("td",{class:"r"}); td.append(numInput(p.v[k], p.def[k], v=>setMp(raw,k,v), p.q.p?L(`Prix ${lab}`,`Price ${lab}`):"")); tr.append(td); }
     // FE_token
     { const td=el("td",{class:"r"}); const def = (P.feMode==="table" && p.tf) ? p.tf.v : p.derived;
-      td.append(numInput(p.fe, def, v=>setMp(raw,"fe",v))); const s=el("span",{class:"sub"}); s.append(feChip(p.feSrc)); td.append(s); tr.append(td); }
+      td.append(numInput(p.fe, def, v=>setMp(raw,"fe",v))); const s=el("span",{class:"sub"}); s.append(srcLink(raw, feBadge(p.feSrc))); td.append(s); tr.append(td); }
     for (const k of ["eO","PUE","fab"]){ const td=el("td",{class:"r"}); td.append(numInput(p.v[k], p.def[k], v=>setMp(raw,k,v))); tr.append(td); }
     // scénario
     { const key=ecoKeyOf(raw); const s=el("select"); for (const [k,v] of Object.entries(ECO).sort((a,b)=>a[1].name.localeCompare(b[1].name))) s.append(el("option",{value:k,text:v.name})); s.value=key; if (mp(raw).eco) s.classList.add("mod");
       s.addEventListener("change",()=>{ const dk=modelInfo(raw).m?modelInfo(raw).m.eco:DEFAULT_ECO; setMp(raw,"eco",s.value===dk?null:s.value); renderAll(); });
-      const exact = m && !aliased && m.eco===key && m.exact; const td=el("td"); const w=el("div",{style:"display:flex;gap:6px;align-items:center;flex-wrap:wrap"}); w.append(s, chip(exact?"ok":"warn", exact?"Exact":"Proxy"), el("a",{href:TOOL_URL(ECO[key].id),target:"_blank",rel:"noopener",class:"small",text:L("Voir","View")})); td.append(w); tr.append(td); }
+      const exact = m && !aliased && m.eco===key && m.exact; const td=el("td"); const w=el("div",{style:"display:flex;gap:6px;align-items:center;flex-wrap:wrap"}); w.append(s); if (!exact) w.append(srcLink(raw, chip("warn","Proxy"))); td.append(w); tr.append(td); }
     // reset
     { const td=el("td"); if (P.mp[raw]){ const bt=el("button",{class:"linkbtn",type:"button",text:L("Rétablir","Reset")}); bt.addEventListener("click",()=>{ delete P.mp[raw]; saveParams(); renderAll(); }); td.append(bt); } tr.append(td); }
     b.append(tr);
   }
   t.append(b); $("paramTable").replaceChildren(t);
+}
+/* ---------- Sources des facteurs (FE_token et énergie) ---------- */
+const MIX_URL = {fr:"https://www.eea.europa.eu/ims/greenhouse-gas-emission-intensity-of-1", "azure-us":"https://arxiv.org/html/2505.09598v1/", eu:"https://www.iea.org/reports/electricity-2026/emissions", world:"https://www.iea.org/reports/electricity-2026/emissions", us:"https://ourworldindata.org/grapher/carbon-intensity-electricity", "world-eco":"https://ecologits.ai/0.9/methodology/llm_inference/"};
+const isAuto = raw => /^\s*auto\s*[:\-–]/i.test(String(raw||""));
+const srcKey = raw => "src-"+normModel(raw).replace(/[^a-z0-9]/g,"_");
+// Badge cliquable qui ouvre l'onglet Sources sur la ligne du modèle
+function srcLink(raw, node){ const a=el("a",{href:"#sources",class:"srcl",title:L("Voir la source dans l'onglet Sources","See the source in the Sources tab")}); a.append(node); a.addEventListener("click",e=>{ e.preventDefault(); goSource(raw); }); return a; }
+function goSource(raw){
+  UI.srcAll = UI.srcAll || (DATA.rows.length>0 && !DATA.rows.some(r=>r.modelRaw===raw));
+  showTab("sources", true); if (DIRTY.sources===false) renderSources();
+  const tr=document.getElementById(srcKey(raw)); if (!tr) return;
+  tr.scrollIntoView({block:"center", behavior:"smooth"}); tr.classList.add("flash"); setTimeout(()=>tr.classList.remove("flash"),1800);
+}
+// Description de la source de FE_token et du scénario d'énergie d'un modèle
+function srcInfo(raw, date){
+  const p=params(raw,date); const {m,aliased}=modelInfo(raw); const key=ecoKeyOf(raw); const eco=ECO[key]||ECO[DEFAULT_ECO];
+  const exact = !!(m && !aliased && m.eco===key && m.exact && !mp(raw).eco);
+  const sc=FE_SCEN.find(s=>s.id===P.feId)||FE_SCEN[0];
+  const ecoTxt = L(`scénario EcoLogits v2 « ${eco.name} »`,`EcoLogits v2 scenario “${eco.name}”`);
+  const scenWhy = exact ? L("scénario propre au modèle","the model's own scenario")
+    : mp(raw).eco ? L("scénario choisi dans la vue Calcul","scenario chosen in the Calculation view")
+    : aliased ? L(`modèle hors grille rattaché à « ${m.name} »`,`model outside the price list mapped to “${m.name}”`)
+    : m ? L("modèle absent d'EcoLogits : scénario le plus proche par taille et par prix","model missing from EcoLogits: closest scenario by size and price")
+    : L("modèle inconnu : scénario générique par défaut","unknown model: generic default scenario");
+  let type, chipNode, origin, link=null, linkTxt=null, internal=null;
+  if (p.feSrc==="saisi"){
+    type="saisi"; chipNode=chip("accent",L("Saisi","Entered"));
+    origin=L("Valeur saisie dans la vue Calcul, Paramètres par modèle. Sans saisie, la valeur viendrait ","Value entered in the Calculation view, per-model parameters. Without it, the value would come from ")+(P.feMode==="table"&&p.tf?L(`de votre table (ligne « ${p.tf.name} »).`,`your table (row “${p.tf.name}”).`):L(`d'EcoLogits (${ecoTxt}).`,`EcoLogits (${ecoTxt}).`));
+  } else if (p.feSrc==="table-S"){
+    type="S"; chipNode=chip("ok",L("Table · sourcé","Table · sourced"));
+    origin=L(`Ligne « ${p.tf.name} » de votre table de facteurs (23/10/2026), marquée « Source ».`,`Row “${p.tf.name}” of your factor table (2026-10-23), marked “Source”.`);
+    linkTxt=L("Document interne","Internal document");
+  } else if (p.feSrc==="table-H"){
+    type="H"; chipNode=chip("warn",L("Table · hypothèse","Table · assumption"));
+    const from=USER_FE_FROM[p.tf.name]||[];
+    origin = from.length ? L(`Ligne « ${p.tf.name} » de votre table, marquée « Hypothèse » : reprend la valeur sourcée de « ${from.join(" » et « ")} ».`,`Row “${p.tf.name}” of your table, marked “Assumption”: reuses the sourced value of “${from.join("” and “")}”.`)
+      : L(`Ligne « ${p.tf.name} » de votre table, marquée « Hypothèse ». Aucune ligne sourcée n'a cette valeur : origine non documentée.`,`Row “${p.tf.name}” of your table, marked “Assumption”. No sourced row has this value: origin undocumented.`);
+    if (from.length) internal=from[0];
+  } else {
+    type = exact ? "EL" : "ELp"; chipNode = exact ? chip("neutral","EcoLogits") : chip("warn",L("EcoLogits · proxy","EcoLogits · proxy"));
+    origin = (P.feMode==="table" ? L("Absent de votre table : ","Missing from your table: ") : "") + L(`${P.feMode==="table"?"c":"C"}alcul EcoLogits, ${ecoTxt} (${scenWhy}). FE = e_O × PUE × mix « ${sc.short||sc.label} » (${fmtSig(feValue())} gCO₂e/kWh)${P.fab?" + fabrication du matériel":""}.`,`EcoLogits calculation, ${ecoTxt} (${scenWhy}). FE = e_O × PUE × “${sc.short||sc.label}” mix (${fmtSig(feValue())} gCO₂e/kWh)${P.fab?" + hardware manufacturing":""}.`);
+    link=TOOL_URL(eco.id); linkTxt=L("Scénario EcoLogits","EcoLogits scenario");
+  }
+  if (isAuto(raw)) origin = L(`Sélection automatique : mêmes facteurs que « ${String(raw).replace(/^\s*auto\s*[:\-–]\s*/i,"")} ». `,`Auto selection: same factors as “${String(raw).replace(/^\s*auto\s*[:\-–]\s*/i,"")}”. `) + origin;
+  return {p, type, chipNode, origin, link, linkTxt, internal, eco, exact, scenWhy, ratio: p.feSrc!=="tool" && p.fe>0 ? p.derived/p.fe : null};
+}
+function srcModelList(){
+  const known=new Map(); for (const m of MODELS) known.set(normModel(m.name), m.name); for (const [n] of USER_FE) if (!known.has(normModel(n))) known.set(normModel(n), n);
+  if (!DATA.rows.length || UI.srcAll){ const imp=DATA.rows.length?paramModels().models:[]; const seen=new Set(imp.map(normModel)); return imp.concat([...known.values()].filter(n=>!seen.has(normModel(n))).sort((a,b)=>a.localeCompare(b))); }
+  return paramModels().models;
+}
+function renderSources(){
+  const box=$("srcView"); box.replaceChildren();
+  const last=paramModels().last; const models=srcModelList(); const inExp=new Set(DATA.rows.map(r=>r.modelRaw));
+  const infos=models.map(raw=>[raw, srcInfo(raw,last)]);
+  // 1. table par modèle
+  const p1=el("section",{class:"panel"}); const hd=el("div",{class:"panel-head"}); const t=el("div",{class:"t"});
+  const cnt=k=>infos.filter(([,i])=>i.type===k).length;
+  t.append(el("h2",{text:L("Source de FE_token par modèle","FE_token source per model")}),
+    el("p",{class:"small muted",text:L(`${models.length} modèle${models.length>1?"s":""} : ${cnt("S")} sourcé${cnt("S")>1?"s":""} dans votre table, ${cnt("H")} hypothèse${cnt("H")>1?"s":""} de votre table, ${cnt("EL")} EcoLogits exact${cnt("EL")>1?"s":""}, ${cnt("ELp")} EcoLogits par proxy${cnt("saisi")?`, ${cnt("saisi")} saisi${cnt("saisi")>1?"s":""}`:""}. Le facteur affiché est celui appliqué avec les réglages actuels de la vue Calcul.`,`${models.length} model${models.length>1?"s":""}: ${cnt("S")} sourced in your table, ${cnt("H")} assumption${cnt("H")>1?"s":""} in your table, ${cnt("EL")} exact EcoLogits, ${cnt("ELp")} EcoLogits via proxy${cnt("saisi")?`, ${cnt("saisi")} entered`:""}. The factor shown is the one applied with the current Calculation view settings.`)}));
+  hd.append(t);
+  if (DATA.rows.length){ const lab=el("label",{class:"toggle small"}); const cb=el("input",{type:"checkbox"}); cb.checked=!!UI.srcAll; cb.addEventListener("change",()=>{ UI.srcAll=cb.checked; renderSources(); }); lab.append(cb, L(" Afficher aussi les modèles absents de l'export"," Also show models missing from the export")); hd.append(lab); }
+  p1.append(hd);
+  const tb=el("table"); tb.append(el("thead",{},row("th",[L("Modèle","Model"),"FE_token (kgCO₂e/token)",L("Type de source","Source type"),L("Origine du facteur","Factor origin"),L("Lien","Link"),L("Énergie e_O : scénario EcoLogits","Energy e_O: EcoLogits scenario"),L("EcoLogits ÷ facteur","EcoLogits ÷ factor")],[0,1,0,0,0,0,1])));
+  const body=el("tbody");
+  for (const [raw,i] of infos){
+    const tr=el("tr",{id:srcKey(raw)});
+    const tdm=el("td"); tdm.append(el("strong",{text:raw}), el("span",{class:"sub",text:FAMS[famOf(raw)].label+(DATA.rows.length&&!inExp.has(raw)?L(" · absent de l'export"," · not in the export"):"")})); tr.append(tdm);
+    tr.append(el("td",{class:"r num",text:sci(i.p.fe)}));
+    const tdt=el("td"); tdt.append(i.chipNode); tr.append(tdt);
+    tr.append(el("td",{class:"o",text:i.origin}));
+    const tdl=el("td",{class:"lk"});
+    if (i.link){ tdl.append(el("a",{href:i.link,target:"_blank",rel:"noopener",text:i.linkTxt+" ↗"})); }
+    else if (i.internal){ const a=el("a",{href:"#sources",text:L(`Ligne « ${i.internal} »`,`Row “${i.internal}”`)}); a.addEventListener("click",e=>{ e.preventDefault(); goSource(i.internal); }); tdl.append(a); }
+    else tdl.append(el("span",{class:"muted small",text:i.linkTxt||"—"}));
+    tr.append(tdl);
+    const tde=el("td"); const w=el("div",{style:"display:flex;gap:6px;align-items:center;flex-wrap:wrap"});
+    w.append(el("a",{href:TOOL_URL(i.eco.id),target:"_blank",rel:"noopener",text:i.eco.name+" ↗"}), chip(i.exact?"ok":"warn", i.exact?"Exact":"Proxy")); tde.append(w, el("span",{class:"sub",text:i.scenWhy})); tr.append(tde);
+    const tdr=el("td",{class:"r num"});
+    if (i.ratio!=null){ tdr.append(i.ratio>10||i.ratio<0.1 ? chip("warn","×"+fmtSig(i.ratio,2)) : document.createTextNode("×"+fmtSig(i.ratio,2))); tdr.title=L(`EcoLogits donnerait ${sci(i.p.derived)} kgCO₂e/token avec le mix et le scénario actuels.`,`EcoLogits would give ${sci(i.p.derived)} kgCO₂e/token with the current mix and scenario.`); }
+    else tdr.append(el("span",{class:"muted",text:"—"}));
+    tr.append(tdr); body.append(tr);
+  }
+  tb.append(body); const wr=el("div",{class:"tbl-wrap",id:"srcTable"}); wr.append(tb); p1.append(wr);
+  p1.append(el("p",{class:"small muted",style:"margin:10px 0 0",text:L("Types : « Table · sourcé » = valeur de votre table marquée Source ; « Table · hypothèse » = valeur de votre table recopiée d'un modèle voisin ; « EcoLogits » = calcul à partir du scénario EcoLogits du modèle ; « EcoLogits · proxy » = scénario d'un autre modèle, le plus proche ; « Saisi » = valeur entrée dans la vue Calcul. Les noms « Auto: X » prennent les facteurs de X. La dernière colonne compare au calcul EcoLogits : un écart supérieur à 10 dans un sens ou dans l'autre est signalé.","Types: “Table · sourced” = value from your table marked Source; “Table · assumption” = value of your table copied from a neighbouring model; “EcoLogits” = computed from the model's EcoLogits scenario; “EcoLogits · proxy” = scenario of another, closest model; “Entered” = value entered in the Calculation view. “Auto: X” names take X's factors. The last column compares with the EcoLogits calculation: a gap above 10 either way is flagged.")}));
+  box.append(p1);
+  // 2. références
+  const sc=FE_SCEN.find(s=>s.id===P.feId)||FE_SCEN[0];
+  const p2=el("section",{class:"panel"}); p2.append(el("div",{class:"panel-head"},el("div",{class:"t"},el("h2",{text:L("Références","References")}),el("p",{class:"small muted",text:L("Documents à l'origine des facteurs et paramètres utilisés.","Documents behind the factors and parameters used.")}))));
+  const refs=[
+    [L("Votre table de facteurs kgCO₂e/token (« Fusion ligne à ligne », 23/10/2026)","Your kgCO₂e/token factor table (“Fusion ligne à ligne”, 2026-10-23)"), L("FE_token par défaut. Document interne, non diffusé : chaque ligne y porte sa référence.","Default FE_token. Internal document, not published: each row carries its reference there."), null],
+    [L("EcoLogits, méthodologie de l'inférence LLM (GenAI Impact)","EcoLogits, LLM inference methodology (GenAI Impact)"), L("Méthode de calcul de e_O et du facteur de repli.","Method for e_O and the fallback factor."), "https://ecologits.ai/0.9/methodology/llm_inference/"],
+    ["carbon-footprint-modeling-tool (Boris Ruf)", L("Scénarios EcoLogits v2 par modèle (énergie GPU + serveur par token, fabrication, PUE).","EcoLogits v2 scenarios per model (GPU + server energy per token, manufacturing, PUE)."), "https://github.com/borisruf/carbon-footprint-modeling-tool"],
+    [L(`Mix électrique retenu : ${sc.label}`,`Electricity mix used: ${sc.label}`), sc.src, MIX_URL[sc.id]||null],
+    [L("GitHub, Models and pricing for GitHub Copilot (20/10/2026)","GitHub, Models and pricing for GitHub Copilot (2026-10-20)"), L("Grille tarifaire : ratios s_I, s_CR, s_CW.","Price list: s_I, s_CR, s_CW ratios."), "https://docs.github.com/en/copilot"]
+  ];
+  const ul=el("ul",{class:"srcrefs"}); for (const [n,u,url] of refs){ const li=el("li"); li.append(url ? el("a",{href:url,target:"_blank",rel:"noopener",text:n+" ↗"}) : el("strong",{text:n}), document.createTextNode(" : "+u)); ul.append(li); }
+  p2.append(ul); box.append(p2);
 }
 function renderSteps(){
   const models=[...new Set(DATA.rows.map(r=>r.modelRaw))].sort();
@@ -2753,7 +2868,7 @@ function deliverLocal(name, text, type, bin){
 /* ---------- Onglets et événements ---------- */
 function showTab(v, push){
   const noData=!DATA.rows.length;
-  if (noData){ if (!["calcul","methodologie"].includes(v)) v="accueil"; } else if (!["synthese","empreinte","proj2030","calcul","demo","controles","methodologie"].includes(v)) v="synthese";
+  if (noData){ if (!["calcul","sources","methodologie"].includes(v)) v="accueil"; } else if (!["synthese","empreinte","proj2030","calcul","sources","demo","controles","methodologie"].includes(v)) v="synthese";
   document.body.classList.toggle("browse", noData && v!=="accueil");
   $("filtersWrap").hidden = !["synthese","empreinte","proj2030","demo"].includes(v);
   UI.tab=v; document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected", String(b.dataset.v===v)));
@@ -2805,7 +2920,7 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()
 new MutationObserver(()=>{ if (DATA.rows.length) renderChart(); }).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 
 // Textes fixes de la page : français dans le HTML, anglais dans ce dictionnaire
-const I18N = {"Accueil": "Home", "Sans import, les onglets Calcul et Méthodologie restent consultables : formules, grille tarifaire, facteurs d'émission et mix électriques.": "Without an import, the Calculation and Methodology tabs can still be browsed: formulas, price list, emission factors and electricity mixes.", "GitHub Copilot · inférence · méthode du 20 octobre 2026": "GitHub Copilot · inference · method of 20 October 2026", "Empreinte carbone de GitHub Copilot": "GitHub Copilot carbon footprint", "Importer l'extraction GitHub": "Import GitHub extract", "Recharger l'exemple": "Reload the sample", "Ou glissez-déposez le fichier. Tout est calculé dans votre navigateur.": "Or drag and drop the file. Everything is computed in your browser.", "Associer les colonnes": "Map the columns", "Certaines colonnes n'ont pas été reconnues automatiquement. Indiquez celles de votre export.": "Some columns were not recognized automatically. Point to the ones in your export.", "Appliquer": "Apply", "Vues": "Views", "Empreinte": "Footprint", "Calcul": "Calculation", "Contrôles": "Controls", "Méthodologie": "Methodology", "Filtres": "Filters", "Vue": "View", "Jour": "Day", "Semaine": "Week", "Mois": "Month", "Trimestre": "Quarter", "Année": "Year", "Tout": "All", "Période": "Period", "Période précédente": "Previous period", "Période suivante": "Next period", "Du": "From", "Au": "To", "Utilisateur": "User", "Tous": "All", "Modèle": "Model", "Organisation": "Organization", "Toutes": "All", "Centre de coût": "Cost center", "Synthèse": "Summary", "Équivalences": "Equivalents", "Ordres de grandeur pour se représenter le résultat central. Facteurs et sources dans la vue": "Orders of magnitude to picture the central result. Factors and sources in the", "Tendance": "Trend", "Émissions par jour": "Emissions per day", "Tokens éq. output": "Output-eq. tokens", "Pas": "Step", "Sem.": "Wk", "Trim.": "Qtr", "Barres": "Bars", "Courbes": "Lines", "Tableau": "Table", "Émissions cumulées": "Cumulative emissions", "Détail par mois": "Monthly breakdown", "Intensité": "Intensity", "Où se concentrent les émissions": "Where emissions concentrate", "Top émetteurs": "Top emitters", "Les cinq premiers de chaque dimension, en part de l'empreinte de la période.": "The top five of each dimension, as a share of the period footprint.", "Émissions jour par jour, semaine par semaine": "Emissions day by day, week by week", "Chaque case est un jour : une ligne par jour de la semaine (lundi à dimanche), une colonne par semaine (date du lundi). Plus la case est foncée, plus ce jour a émis de CO₂e. La colonne « Part » donne le poids de chaque jour de la semaine sur la période.": "Each cell is one day: one row per day of the week (Monday to Sunday), one column per week (Monday's date). The darker the cell, the more CO₂e that day emitted. The “Share” column gives each weekday's weight over the period.", "Leviers et incertitude": "Levers and uncertainty", "Levier modèle": "Model lever", "Économie si une part des tokens d'un modèle était traitée par un autre modèle déjà utilisé.": "Saving if part of one model's tokens were handled by another model already in use.", "Modèle actuel": "Current model", "Modèle cible": "Target model", "Part basculée :": "Share switched:", "Hypothèse : même volume de tokens par catégorie et ratios de prix du modèle cible. Un modèle plus léger peut produire plus de tokens ou un résultat différent ; l'économie est un ordre de grandeur.": "Assumption: same token volume per category and the target model's price ratios. A lighter model may produce more tokens or a different result; the saving is an order of magnitude.", "Fourchette d'incertitude": "Uncertainty range", "Le résultat central recalculé avec d'autres facteurs, mix électriques et conventions, sur la période et les filtres choisis.": "The central result recomputed with other factors, electricity mixes and conventions, for the selected period and filters.", "Détail": "Details", "Par modèle": "By model", "Facteur appliqué (FE_token, en kgCO₂e par token) et part des émissions. H : hypothèse de votre table ; EL : EcoLogits ; S : valeur saisie.": "Applied factor (FE_token, in kgCO₂e per token) and share of emissions. H: assumption in your table; EL: EcoLogits; E: entered value.", "Par utilisateur": "By user", "Sur la période et les filtres choisis.": "For the selected period and filters.", "Dépôt": "Repository", "Exporter les résultats par jour (CSV)": "Export daily results (CSV)", "Formules": "Formulas", "Appliquées à chaque ligne de l'export, dans cet ordre. Modifiez-les puis appuyez sur Entrée ou quittez le champ : tout le tableau de bord est recalculé.": "Applied to each export row, in this order. Edit them then press Enter or leave the field: the whole dashboard is recomputed.", "Rétablir les formules de la méthode": "Restore the method formulas", "Variables et fonctions disponibles": "Available variables and functions", "Paramètres par modèle": "Parameters per model", "Valeur par défaut en clair, valeur modifiée surlignée. Videz un champ pour revenir à la valeur par défaut.": "Default value in light text, modified value highlighted. Clear a field to go back to the default.", "Rétablir tous les paramètres": "Restore all parameters", "Exporter en Excel": "Export to Excel", "Paramètres communs": "Common parameters", "Utilisés pour calculer FE_token quand un modèle n'a pas de facteur dans votre table, et pour les variantes de sensibilité.": "Used to compute FE_token when a model has no factor in your table, and for the sensitivity variants.", "Source de FE_token par défaut": "Default FE_token source", "Table de facteurs fournie": "Supplied factor table", "EcoLogits pour tous les modèles": "EcoLogits for all models", "Mix électrique (FE_mix)": "Electricity mix (FE_mix)", "Mix personnalisé (gCO₂e/kWh)": "Custom mix (gCO₂e/kWh)", "Fabrication du matériel": "Hardware manufacturing", "Ajouter « fab » dans EcoLogits": "Add “fab” to EcoLogits", "Le facteur d'EcoLogits l'inclut ; la méthode PDF l'exclut.": "EcoLogits factor includes it; the PDF method excludes it.", "Multiplicateurs de sensibilité bas / haut": "Low / high sensitivity multipliers", "Calcul pas à pas": "Step-by-step calculation", "Sommes sur tout l'export pour un modèle, avec les formules et paramètres ci-dessus.": "Totals over the whole export for one model, with the formulas and parameters above.", "Projection de fin de mois": "End-of-month projection", "Même périmètre que la vue Empreinte (période et filtres). Le résultat alimente les tuiles de projection et la courbe du cumul de la vue Empreinte.": "Same scope as the Footprint view (period and filters). The result feeds the projection tiles and the cumulative curve of the Footprint view.", "Rétablir le modèle par défaut": "Restore the default model", "Méthode": "Method", "Fenêtre N (jours)": "Window N (days)", "Jours récents pris en compte. Sans objet pour le rythme moyen à date et le modèle fondé sur les usages.": "Recent days taken into account. Not used by the average pace to date or the usage-based model.", "Croissance": "Growth", "Amortie": "Damped", "Constante": "Constant", "Nulle": "None", "Modèle fondé sur les usages : prolongement de la hausse des utilisateurs et de l'usage par personne.": "Usage-based model: how the growth in users and usage per person is extended.", "Licences (plafond d'utilisateurs)": "Licences (user cap)", "0 = sans plafond. Modèle fondé sur les usages uniquement.": "0 = no cap. Usage-based model only.", "Ajustement du reste de l'horizon (%)": "Adjustment of the rest of the horizon (%)", "Pour un événement connu : déploiement, congés, changement de modèle.": "For a known event: rollout, holidays, model change.", "Contrôle a posteriori": "Backtest", "Chaque méthode est rejouée sur les mois complets précédents, arrêtée au même jour du mois, puis comparée au total réel. L'ajustement en % n'y est pas appliqué. L'écart aide à choisir la méthode.": "Each method is replayed on the previous complete months, stopped at the same day of the month, then compared with the actual total. The % adjustment is not applied. The error helps choose the method.", "C6 · Sensibilité": "C6 · Sensitivity", "Résultat central et variantes, sur tout le jeu de données importé.": "Central result and variants, over the whole imported dataset.", "Sommaire": "Contents", "Objet": "Purpose", "Étapes": "Steps", "Conventions δ et ε": "δ and ε conventions", "Ratios de prix": "Price ratios", "Facteurs d'émission": "Emission factors", "Mix électriques": "Electricity mixes", "Indicateurs": "Indicators", "Limites": "Limitations", "Sources": "Sources", "Traçabilité": "Traceability", "Objet et périmètre": "Purpose and scope", "Étapes de calcul": "Calculation steps", "Facteurs d'émission par token": "Emission factors per token", "Indicateurs de la vue Empreinte": "Footprint view indicators", "Grille tarifaire et ratios (38 modèles)": "Price list and ratios (38 models)", "Table de facteurs complète (61 lignes)": "Full factor table (61 rows)", "Traçabilité du traitement": "Processing traceability", "Section 6 de la méthode : paramètres utilisés pour l'export importé.": "Method section 6: parameters used for the imported export.", "Exporter les paramètres (JSON)": "Export the parameters (JSON)", "Langue": "Language", "Copier le texte": "Copy the text", "Pour un support : faites une capture d'écran du cadre, ou copiez le texte pour coller les chiffres. La synthèse suit la période et les filtres.": "For a slide: take a screenshot of the frame, or copy the text to paste the figures. The summary follows the period and filters.", "Chiffres clés": "Key figures", "Ce mois": "This month", "Mois dernier": "Last month", "Cette année": "This year", "Découpage": "Breakdown", "Affiché": "Showing", "Dates précises": "Exact dates", "Coûts et carbone": "Costs and carbon", "Dépense et empreinte": "Spend and footprint", "Chaque point est un élément de la dimension choisie : montant brut facturé (gross_amount) en abscisse, CO₂e en ordonnée. La droite pointillée suit l'intensité moyenne de la période : au-dessus, l'élément émet plus par dollar que la moyenne.": "Each dot is one item of the chosen dimension: gross billed amount (gross_amount) on the x axis, CO₂e on the y axis. The dashed line follows the period's average intensity: above it, the item emits more per dollar than average.", "Intensité par dollar dans le temps": "Intensity per dollar over time", "Dépense et CO₂e par élément": "Spend and CO₂e per item", "gCO₂e par dollar brut, par pas de temps du graphique de tendance. Une hausse signale un glissement vers des modèles plus émetteurs à dépense égale.": "gCO₂e per gross dollar, for each time step of the trend chart. A rise signals a shift toward higher-emitting models for the same spend.", "Fin du mois": "End of month", "Fin de l'année": "End of year", "Aucune donnée pour l'instant": "No data yet", "Importez l'export « AI usage report » de GitHub Copilot au format CSV, avec le bouton « Importer l'extraction GitHub » ou par glisser-déposer. Le fichier reste dans votre navigateur.": "Import the GitHub Copilot “AI usage report” export as a CSV, with the “Import GitHub extract” button or by drag and drop. The file stays in your browser.", "Démonstration": "Demonstration", "Projections 2030": "2030 projections", "Démonstration du calcul": "Calculation walkthrough", "Pour un modèle, chaque étape du calcul sur les usages réels importés de la période choisie : la formule, puis la même formule avec les valeurs, jusqu'au CO₂e.": "For one model, each calculation step on the actual imported usage of the chosen period: the formula, then the same formula with the values, up to the CO₂e."};
+const I18N = {"Accueil": "Home", "Sans import, les onglets Calcul, Sources et Méthodologie restent consultables : formules, grille tarifaire, facteurs d'émission, leurs sources et mix électriques.": "Without an import, the Calculation, Sources and Methodology tabs can still be browsed: formulas, price list, emission factors, their sources and electricity mixes.", "GitHub Copilot · inférence · méthode du 20 octobre 2026": "GitHub Copilot · inference · method of 20 October 2026", "Empreinte carbone de GitHub Copilot": "GitHub Copilot carbon footprint", "Importer l'extraction GitHub": "Import GitHub extract", "Recharger l'exemple": "Reload the sample", "Ou glissez-déposez le fichier. Tout est calculé dans votre navigateur.": "Or drag and drop the file. Everything is computed in your browser.", "Associer les colonnes": "Map the columns", "Certaines colonnes n'ont pas été reconnues automatiquement. Indiquez celles de votre export.": "Some columns were not recognized automatically. Point to the ones in your export.", "Appliquer": "Apply", "Vues": "Views", "Empreinte": "Footprint", "Calcul": "Calculation", "Contrôles": "Controls", "Méthodologie": "Methodology", "Filtres": "Filters", "Vue": "View", "Jour": "Day", "Semaine": "Week", "Mois": "Month", "Trimestre": "Quarter", "Année": "Year", "Tout": "All", "Période": "Period", "Période précédente": "Previous period", "Période suivante": "Next period", "Du": "From", "Au": "To", "Utilisateur": "User", "Tous": "All", "Modèle": "Model", "Organisation": "Organization", "Toutes": "All", "Centre de coût": "Cost center", "Synthèse": "Summary", "Équivalences": "Equivalents", "Ordres de grandeur pour se représenter le résultat central. Facteurs et sources dans la vue": "Orders of magnitude to picture the central result. Factors and sources in the", "Tendance": "Trend", "Émissions par jour": "Emissions per day", "Tokens éq. output": "Output-eq. tokens", "Pas": "Step", "Sem.": "Wk", "Trim.": "Qtr", "Barres": "Bars", "Courbes": "Lines", "Tableau": "Table", "Émissions cumulées": "Cumulative emissions", "Détail par mois": "Monthly breakdown", "Intensité": "Intensity", "Où se concentrent les émissions": "Where emissions concentrate", "Top émetteurs": "Top emitters", "Les cinq premiers de chaque dimension, en part de l'empreinte de la période.": "The top five of each dimension, as a share of the period footprint.", "Émissions jour par jour, semaine par semaine": "Emissions day by day, week by week", "Chaque case est un jour : une ligne par jour de la semaine (lundi à dimanche), une colonne par semaine (date du lundi). Plus la case est foncée, plus ce jour a émis de CO₂e. La colonne « Part » donne le poids de chaque jour de la semaine sur la période.": "Each cell is one day: one row per day of the week (Monday to Sunday), one column per week (Monday's date). The darker the cell, the more CO₂e that day emitted. The “Share” column gives each weekday's weight over the period.", "Leviers et incertitude": "Levers and uncertainty", "Levier modèle": "Model lever", "Économie si une part des tokens d'un modèle était traitée par un autre modèle déjà utilisé.": "Saving if part of one model's tokens were handled by another model already in use.", "Modèle actuel": "Current model", "Modèle cible": "Target model", "Part basculée :": "Share switched:", "Hypothèse : même volume de tokens par catégorie et ratios de prix du modèle cible. Un modèle plus léger peut produire plus de tokens ou un résultat différent ; l'économie est un ordre de grandeur.": "Assumption: same token volume per category and the target model's price ratios. A lighter model may produce more tokens or a different result; the saving is an order of magnitude.", "Fourchette d'incertitude": "Uncertainty range", "Le résultat central recalculé avec d'autres facteurs, mix électriques et conventions, sur la période et les filtres choisis.": "The central result recomputed with other factors, electricity mixes and conventions, for the selected period and filters.", "Détail": "Details", "Par modèle": "By model", "Facteur appliqué (FE_token, en kgCO₂e par token) et part des émissions. H : hypothèse de votre table ; EL : EcoLogits ; S : valeur saisie.": "Applied factor (FE_token, in kgCO₂e per token) and share of emissions. H: assumption in your table; EL: EcoLogits; E: entered value.", "Par utilisateur": "By user", "Sur la période et les filtres choisis.": "For the selected period and filters.", "Dépôt": "Repository", "Exporter les résultats par jour (CSV)": "Export daily results (CSV)", "Formules": "Formulas", "Appliquées à chaque ligne de l'export, dans cet ordre. Modifiez-les puis appuyez sur Entrée ou quittez le champ : tout le tableau de bord est recalculé.": "Applied to each export row, in this order. Edit them then press Enter or leave the field: the whole dashboard is recomputed.", "Rétablir les formules de la méthode": "Restore the method formulas", "Variables et fonctions disponibles": "Available variables and functions", "Paramètres par modèle": "Parameters per model", "Valeur par défaut en clair, valeur modifiée surlignée. Videz un champ pour revenir à la valeur par défaut. Cliquez sur le badge sous FE_token pour voir sa source dans l'onglet Sources.": "Default value in light text, modified value highlighted. Clear a field to go back to the default. Click the badge under FE_token to see its source in the Sources tab.", "Rétablir tous les paramètres": "Restore all parameters", "Exporter en Excel": "Export to Excel", "Paramètres communs": "Common parameters", "Utilisés pour calculer FE_token quand un modèle n'a pas de facteur dans votre table, et pour les variantes de sensibilité.": "Used to compute FE_token when a model has no factor in your table, and for the sensitivity variants.", "Source de FE_token par défaut": "Default FE_token source", "Table de facteurs fournie": "Supplied factor table", "EcoLogits pour tous les modèles": "EcoLogits for all models", "Mix électrique (FE_mix)": "Electricity mix (FE_mix)", "Mix personnalisé (gCO₂e/kWh)": "Custom mix (gCO₂e/kWh)", "Fabrication du matériel": "Hardware manufacturing", "Ajouter « fab » dans EcoLogits": "Add “fab” to EcoLogits", "Le facteur d'EcoLogits l'inclut ; la méthode PDF l'exclut.": "EcoLogits factor includes it; the PDF method excludes it.", "Multiplicateurs de sensibilité bas / haut": "Low / high sensitivity multipliers", "Calcul pas à pas": "Step-by-step calculation", "Sommes sur tout l'export pour un modèle, avec les formules et paramètres ci-dessus.": "Totals over the whole export for one model, with the formulas and parameters above.", "Projection de fin de mois": "End-of-month projection", "Même périmètre que la vue Empreinte (période et filtres). Le résultat alimente les tuiles de projection et la courbe du cumul de la vue Empreinte.": "Same scope as the Footprint view (period and filters). The result feeds the projection tiles and the cumulative curve of the Footprint view.", "Rétablir le modèle par défaut": "Restore the default model", "Méthode": "Method", "Fenêtre N (jours)": "Window N (days)", "Jours récents pris en compte. Sans objet pour le rythme moyen à date et le modèle fondé sur les usages.": "Recent days taken into account. Not used by the average pace to date or the usage-based model.", "Croissance": "Growth", "Amortie": "Damped", "Constante": "Constant", "Nulle": "None", "Modèle fondé sur les usages : prolongement de la hausse des utilisateurs et de l'usage par personne.": "Usage-based model: how the growth in users and usage per person is extended.", "Licences (plafond d'utilisateurs)": "Licences (user cap)", "0 = sans plafond. Modèle fondé sur les usages uniquement.": "0 = no cap. Usage-based model only.", "Ajustement du reste de l'horizon (%)": "Adjustment of the rest of the horizon (%)", "Pour un événement connu : déploiement, congés, changement de modèle.": "For a known event: rollout, holidays, model change.", "Contrôle a posteriori": "Backtest", "Chaque méthode est rejouée sur les mois complets précédents, arrêtée au même jour du mois, puis comparée au total réel. L'ajustement en % n'y est pas appliqué. L'écart aide à choisir la méthode.": "Each method is replayed on the previous complete months, stopped at the same day of the month, then compared with the actual total. The % adjustment is not applied. The error helps choose the method.", "C6 · Sensibilité": "C6 · Sensitivity", "Résultat central et variantes, sur tout le jeu de données importé.": "Central result and variants, over the whole imported dataset.", "Sommaire": "Contents", "Objet": "Purpose", "Étapes": "Steps", "Conventions δ et ε": "δ and ε conventions", "Ratios de prix": "Price ratios", "Facteurs d'émission": "Emission factors", "Mix électriques": "Electricity mixes", "Indicateurs": "Indicators", "Limites": "Limitations", "Sources": "Sources", "Traçabilité": "Traceability", "Objet et périmètre": "Purpose and scope", "Étapes de calcul": "Calculation steps", "Facteurs d'émission par token": "Emission factors per token", "Indicateurs de la vue Empreinte": "Footprint view indicators", "Grille tarifaire et ratios (38 modèles)": "Price list and ratios (38 models)", "Table de facteurs complète (61 lignes)": "Full factor table (61 rows)", "Traçabilité du traitement": "Processing traceability", "Section 6 de la méthode : paramètres utilisés pour l'export importé.": "Method section 6: parameters used for the imported export.", "Exporter les paramètres (JSON)": "Export the parameters (JSON)", "Langue": "Language", "Copier le texte": "Copy the text", "Pour un support : faites une capture d'écran du cadre, ou copiez le texte pour coller les chiffres. La synthèse suit la période et les filtres.": "For a slide: take a screenshot of the frame, or copy the text to paste the figures. The summary follows the period and filters.", "Chiffres clés": "Key figures", "Ce mois": "This month", "Mois dernier": "Last month", "Cette année": "This year", "Découpage": "Breakdown", "Affiché": "Showing", "Dates précises": "Exact dates", "Coûts et carbone": "Costs and carbon", "Dépense et empreinte": "Spend and footprint", "Chaque point est un élément de la dimension choisie : montant brut facturé (gross_amount) en abscisse, CO₂e en ordonnée. La droite pointillée suit l'intensité moyenne de la période : au-dessus, l'élément émet plus par dollar que la moyenne.": "Each dot is one item of the chosen dimension: gross billed amount (gross_amount) on the x axis, CO₂e on the y axis. The dashed line follows the period's average intensity: above it, the item emits more per dollar than average.", "Intensité par dollar dans le temps": "Intensity per dollar over time", "Dépense et CO₂e par élément": "Spend and CO₂e per item", "gCO₂e par dollar brut, par pas de temps du graphique de tendance. Une hausse signale un glissement vers des modèles plus émetteurs à dépense égale.": "gCO₂e per gross dollar, for each time step of the trend chart. A rise signals a shift toward higher-emitting models for the same spend.", "Fin du mois": "End of month", "Fin de l'année": "End of year", "Aucune donnée pour l'instant": "No data yet", "Importez l'export « AI usage report » de GitHub Copilot au format CSV, avec le bouton « Importer l'extraction GitHub » ou par glisser-déposer. Le fichier reste dans votre navigateur.": "Import the GitHub Copilot “AI usage report” export as a CSV, with the “Import GitHub extract” button or by drag and drop. The file stays in your browser.", "Démonstration": "Demonstration", "Projections 2030": "2030 projections", "Démonstration du calcul": "Calculation walkthrough", "Pour un modèle, chaque étape du calcul sur les usages réels importés de la période choisie : la formule, puis la même formule avec les valeurs, jusqu'au CO₂e.": "For one model, each calculation step on the actual imported usage of the chosen period: the formula, then the same formula with the values, up to the CO₂e."};
 const I18N_NODES = [];
 (function collect(){
   const w=document.createTreeWalker(document.querySelector(".wrap"), NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT, {acceptNode:n=>{
