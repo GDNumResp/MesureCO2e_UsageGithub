@@ -126,19 +126,19 @@ wb.move_sheet("Mode d'emploi", offset=-(len(wb.sheetnames) - 1))  # premier ongl
 
 # ---------- Listes ----------
 FE_SCEN = [
-    ('France (2020, EEA)', 51.1, "EEA, défaut du Calculateur de Boris"),
-    ('Azure, datacenters USA (2023)', 352.8, "arXiv 2505.09598, repris dans le Calculateur de Boris"),
+    ('France (2020, EEA)', 51.1, "EEA, défaut d'EcoLogits"),
+    ('Azure, datacenters USA (2023)', 352.8, "arXiv 2505.09598, repris par EcoLogits"),
     ('Union européenne (2025, IEA)', 170, "IEA, Electricity 2026, intensité CO₂ de la production"),
     ('Monde (2025, IEA)', 435, "IEA, Electricity 2026, intensité CO₂ de la production"),
     ('USA (2021, OWID)', 379, "Our World in Data (pas de valeur IEA publique)"),
-    ('Monde (EcoLogits)', 590.478, "Mix mondial EcoLogits, Calculateur de Boris"),
+    ('Monde (EcoLogits)', 590.478, "Mix mondial EcoLogits"),
     ('Personnalisé', None, "Valeur saisie dans Calcul"),
 ]
 wsL['A1'] = 'Mix électrique'; wsL['B1'] = 'gCO₂e/kWh'; wsL['C1'] = 'Source'
 for i, (n, v, s) in enumerate(FE_SCEN, start=2):
     wsL.cell(i, 1, n); wsL.cell(i, 2, v); wsL.cell(i, 3, s)
 name('L_MixNom', "Listes!$A$2:$A$8"); name('L_MixVal', "Listes!$B$2:$B$8"); name('L_MixSrc', "Listes!$C$2:$C$8")
-wsL['E1'] = 'Source des facteurs'; wsL['E2'] = 'Table fournie'; wsL['E3'] = 'Calculateur de Boris'
+wsL['E1'] = 'Source des facteurs'; wsL['E2'] = 'Table fournie'; wsL['E3'] = 'EcoLogits'
 wsL['F1'] = 'Oui/Non'; wsL['F2'] = 'Oui'; wsL['F3'] = 'Non'
 wsL['G1'] = 'Convention'; wsL['G2'] = 'Inclusive'; wsL['G3'] = 'Mixte'; wsL['G4'] = 'Exclusive'
 wsL['I1'] = 'Mois'
@@ -274,11 +274,11 @@ for nm, c in [('D_Date', 'date'), ('D_Prod', 'product'), ('D_I', 'input'), ('D_O
 title(wsC, 'Calcul', 'Formules, paramètres globaux et paramètres par modèle. Les cellules jaunes sont modifiables ; tout le classeur se recalcule.')
 section(wsC, 'B5', 'Réglages généraux', 4)
 SET = [
-    ('C6', 'Source des facteurs d\'émission', 'Table fournie', None, 'P_Source', "« Table fournie » = votre table kgCO₂e/token (23/10/2026). Les modèles absents de la table passent par le Calculateur de Boris."),
-    ('C7', 'Mix électrique (Calculateur de Boris)', 'France (2020, EEA)', None, 'P_MixNom', "Sert au calcul des modèles absents de la table, et à la vue de sensibilité C6."),
+    ('C6', 'Source des facteurs d\'émission', 'Table fournie', None, 'P_Source', "« Table fournie » = votre table kgCO₂e/token (23/10/2026). Les modèles absents de la table passent par le EcoLogits."),
+    ('C7', 'Mix électrique (EcoLogits)', 'France (2020, EEA)', None, 'P_MixNom', "Sert au calcul des modèles absents de la table, et à la vue de sensibilité C6."),
     ('C8', 'Mix personnalisé (gCO₂e/kWh)', 300, '0.0', 'P_MixPerso', "Utilisé seulement si le mix choisi est « Personnalisé »."),
     ('C9', 'Mix retenu (gCO₂e/kWh)', '=IF(P_MixNom="Personnalisé",P_MixPerso,INDEX(L_MixVal,MATCH(P_MixNom,L_MixNom,0)))', '0.0', 'P_Mix', None),
-    ('C10', 'Inclure la fabrication (scope 3)', 'Oui', None, 'P_Fab', "Le Calculateur de Boris ajoute la fabrication du matériel par token. Votre méthode l'exclut : mettre « Non » pour s'y conformer."),
+    ('C10', 'Inclure la fabrication (scope 3)', 'Oui', None, 'P_Fab', "Le EcoLogits ajoute la fabrication du matériel par token. Votre méthode l'exclut : mettre « Non » pour s'y conformer."),
     ('C11', "Fourchette d'incertitude basse (×)", 0.5, '0.00', 'P_Lo', "Multiplicateur appliqué au résultat central pour la borne basse."),
     ('C12', "Fourchette d'incertitude haute (×)", 2, '0.00', 'P_Hi', "Multiplicateur appliqué au résultat central pour la borne haute."),
     ('C13', 'Projection : fenêtre (jours)', 28, '0', 'P_N', "Rythme quotidien moyen des N derniers jours de données, prolongé jusqu'au 31 décembre."),
@@ -306,7 +306,7 @@ FX = [
     ('Tokens équivalent output', 'T_O = F·s_I + CR·s_CR + CW·s_CW + O'),
     ('Énergie (kWh)', 'E = T_O × e_O × PUE / 1000'),
     ('Empreinte (kgCO₂e)', 'CO₂e = T_O × FE_token'),
-    ('FE_token calculé (Calculateur de Boris)', 'FE = e_O × PUE × FE_mix / 10⁶ + fab'),
+    ('FE_token calculé (EcoLogits)', 'FE = e_O × PUE × FE_mix / 10⁶ + fab'),
 ]
 for i, (a, b) in enumerate(FX):
     cellv(wsC, f'B{17 + i}', a); cellv(wsC, f'C{17 + i}', b, font=Font(name='Consolas', size=10, color=INK))
@@ -367,7 +367,7 @@ for i in range(NMOD + NBLANK):
     cellv(wsC, C('sCW'), f'=IF({B}="","",IF(N({PO})>0,IF({PCW}="",{PI},{PCW})/{PO},0.25))', '0.000')
     cellv(wsC, C('FEC'), f'=IF({B}="","",{C("eO")}*{C("PUE")}*P_Mix/1000000+IF(P_Fab="Oui",{C("Fab")},0))', F_SCI)
     cellv(wsC, C('FE'), f'=IF({B}="","",IF({C("FEF")}<>"",{C("FEF")},IF(AND(P_Source="Table fournie",{C("FET")}<>""),{C("FET")},{C("FEC")})))', F_SCI, f(10, True, NAVY))
-    cellv(wsC, C('Src'), f'=IF({B}="","",IF({C("FEF")}<>"","Forcé",IF(AND(P_Source="Table fournie",{C("FET")}<>""),IF({C("Stat")}="H","Table (hypothèse)","Table (sourcé)"),"Calculateur de Boris")))', font=f(10, color=MUTED))
+    cellv(wsC, C('Src'), f'=IF({B}="","",IF({C("FEF")}<>"","Forcé",IF(AND(P_Source="Table fournie",{C("FET")}<>""),IF({C("Stat")}="H","Table (hypothèse)","Table (sourcé)"),"EcoLogits")))', font=f(10, color=MUTED))
     for k in MC:
         wsC[C(k)].border = Border(bottom=Side(style='hair', color=LINE))
 dv = DataValidation(type='list', formula1='=Listes!$G$2:$G$4', allow_blank=True); wsC.add_data_validation(dv); dv.add(f'{MC["Force"]}{M0}:{MC["Force"]}{M1}')
@@ -489,11 +489,11 @@ section(wsK, 'B36', 'C6 · Sensibilité (année affichée)', 4)
 TOY = 'I_TO'
 C6 = [
     ('Résultat central', '=SUM(I_CO2)'),
-    ('Tout au Calculateur de Boris, mix retenu', f'=SUMPRODUCT({TOY},M_FEC)'),
-    ('Calculateur de Boris, France (2020, EEA) 51,1 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*51.1/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
-    ('Calculateur de Boris, Union européenne (2025, IEA) 170 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*170/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
-    ('Calculateur de Boris, Monde (2025, IEA) 435 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*435/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
-    ('Calculateur de Boris, mix retenu, sans fabrication', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*P_Mix/1000000'),
+    ('Tout au EcoLogits, mix retenu', f'=SUMPRODUCT({TOY},M_FEC)'),
+    ('EcoLogits, France (2020, EEA) 51,1 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*51.1/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
+    ('EcoLogits, Union européenne (2025, IEA) 170 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*170/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
+    ('EcoLogits, Monde (2025, IEA) 435 g/kWh', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*435/1000000+IF(P_Fab="Oui",SUMPRODUCT({TOY},M_Fab),0)'),
+    ('EcoLogits, mix retenu, sans fabrication', f'=SUMPRODUCT({TOY},M_eO,M_PUE)*P_Mix/1000000'),
     ('Fourchette basse (résultat central × basse)', '=C37*P_Lo'),
     ('Fourchette haute (résultat central × haute)', '=C37*P_Hi'),
 ]
@@ -682,14 +682,14 @@ xrow('T_O', '= F·s_I + CR·s_CR + CW·s_CW + O')
 xrow('', G(f'"= "&{ttok("X_F")}&" × "&{tnum("X_sI")}&" + "&{ttok("X_CR")}&" × "&{tnum("X_sCR")}&" + "&{ttok("X_CW")}&" × "&{tnum("X_sCW")}&" + "&{ttok("X_O")}'), G('X_TO'), F_INT, 'tokens', True, 30)
 
 xstep(6, 'Énergie', None)
-para(wsX, xr - 0, 2, '=IF(X_Row="","","e_O : énergie par token généré (GPU et serveur, Wh/token), scénario EcoLogits « "&X_Scen&" » du Calculateur de Boris. PUE : efficacité du datacenter. La division par 1 000 convertit les Wh en kWh. L\'énergie n\'entre dans le CO₂e que lorsque FE_token vient du Calculateur de Boris.")', 4, 30, 9, INK2); xr += 1
+para(wsX, xr - 0, 2, '=IF(X_Row="","","e_O : énergie par token généré (GPU et serveur, Wh/token), scénario EcoLogits « "&X_Scen&" ». PUE : efficacité du datacenter. La division par 1 000 convertit les Wh en kWh. L\'énergie n\'entre dans le CO₂e que lorsque FE_token vient d\'EcoLogits.")', 4, 30, 9, INK2); xr += 1
 xrow('E', '= T_O × e_O × PUE / 1000')
 xrow('', G(f'"= "&{ttok("X_TO")}&" × "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" / 1000"'), G('X_kWh'), '#,##0.00', 'kWh', True)
 
 xstep(7, "Facteur d'émission par token", None)
-para(wsX, xr, 2, '=IF(X_Row="","",IF(X_Src="Calculateur de Boris",IF(P_Source="Table fournie","Modèle absent de votre table de facteurs : facteur","Facteur")&" du Calculateur de Boris. FE_mix : mix électrique « "&P_MixNom&" » (gCO₂e/kWh). La division par 10⁶ convertit des Wh × g/kWh en kg"&IF(P_Fab="Oui"," ; fab ajoute la fabrication du matériel par token (kgCO₂e/token).","."),IF(X_Src="Forcé","Valeur forcée dans l\'onglet Calcul, en kgCO₂e par token équivalent output.","Valeur de la table de facteurs fournie ("&IF(X_Stat="H","hypothèse","sourcée")&"), en kgCO₂e par token équivalent output.")))', 4, 30, 9, INK2); xr += 1
-xrow('FE_token', G('IF(X_Src="Calculateur de Boris","= e_O × PUE × FE_mix / 10⁶"&IF(P_Fab="Oui"," + fab",""),"valeur de "&IF(X_Src="Forcé","Calcul (forcée)","la table de facteurs"))'))
-xrow('', G(f'IF(X_Src="Calculateur de Boris","= "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" × "&{tnum("P_Mix")}&" / 10⁶"&IF(P_Fab="Oui"," + "&{tsci("X_Fab")},""),"= "&{tsci("X_FE")})'), G('X_FE'), F_SCI, 'kgCO₂e/token', True)
+para(wsX, xr, 2, '=IF(X_Row="","",IF(X_Src="EcoLogits",IF(P_Source="Table fournie","Modèle absent de votre table de facteurs : facteur","Facteur")&" d\'EcoLogits. FE_mix : mix électrique « "&P_MixNom&" » (gCO₂e/kWh). La division par 10⁶ convertit des Wh × g/kWh en kg"&IF(P_Fab="Oui"," ; fab ajoute la fabrication du matériel par token (kgCO₂e/token).","."),IF(X_Src="Forcé","Valeur forcée dans l\'onglet Calcul, en kgCO₂e par token équivalent output.","Valeur de la table de facteurs fournie ("&IF(X_Stat="H","hypothèse","sourcée")&"), en kgCO₂e par token équivalent output.")))', 4, 30, 9, INK2); xr += 1
+xrow('FE_token', G('IF(X_Src="EcoLogits","= e_O × PUE × FE_mix / 10⁶"&IF(P_Fab="Oui"," + fab",""),"valeur de "&IF(X_Src="Forcé","Calcul (forcée)","la table de facteurs"))'))
+xrow('', G(f'IF(X_Src="EcoLogits","= "&{tsci("X_eO")}&" × "&{tnum("X_PUE")}&" × "&{tnum("P_Mix")}&" / 10⁶"&IF(P_Fab="Oui"," + "&{tsci("X_Fab")},""),"= "&{tsci("X_FE")})'), G('X_FE'), F_SCI, 'kgCO₂e/token', True)
 
 xstep(8, 'Empreinte carbone', "Tokens équivalent output multipliés par le facteur d'émission par token.")
 xrow('CO₂e', '= T_O × FE_token')
@@ -876,7 +876,7 @@ MT = [
     ('Formules', "Input frais : F = max(0, I − δ·CR − ε·CW). Tokens équivalent output : T_O = F·s_I + CR·s_CR + CW·s_CW + O, chaque catégorie étant pondérée par son prix rapporté au prix de l'output du même modèle (s_I = P_I / P_O, etc.). Énergie : E = T_O × e_O × PUE / 1000. Empreinte : CO₂e = T_O × FE_token."),
     ('Convention de l\'input (δ, ε)', "GitHub ne documente pas si la colonne input de l'export contient déjà le cache. Pour chaque modèle : convention forcée dans Calcul, sinon C2 (si CR + CW dépasse I sur au moins une ligne, la convention est forcément exclusive), sinon C3 (rapprochement des coûts de la famille), sinon la convention documentée de l'API du fournisseur."),
     ('Prix', "Grille GitHub du 20 octobre 2026, palier standard, en dollars par million de tokens. Le palier long contexte n'est pas identifiable dans l'export. Quand le cache write n'est pas facturé mais que CW > 0, s_CW = s_I. Le prix du cache read de Claude Sonnet 5.5 était de 0,20 $ avant le 1er octobre 2026 : les lignes antérieures utilisent la ligne « [ancien tarif] ». Claude Opus 4.5, 4.6, 4.7 et Claude Sonnet 4.5 ne figurent plus dans la grille GitHub : leurs tarifs publics de l'API Anthropic sont utilisés. Les modèles « Auto: X » utilisent les paramètres de X."),
-    ('Facteurs d\'émission', "FE_token provient de votre table de facteurs en kgCO₂e par token (transmise le 23 octobre 2026), dont chaque ligne est marquée S (sourcé) ou H (hypothèse). Les modèles absents de la table sont calculés avec le Calculateur de Boris (carbon-footprint-modeling-tool de Boris Ruf, scénarios EcoLogits v2, commit 841bd2a du 9 novembre 2026) : FE = PUE (1,2) × énergie GPU + serveur par token × intensité du mix électrique + fabrication du matériel par token (scope 3). Les modèles de 2026 absents du Calculateur de Boris sont rattachés au scénario le plus proche (marqués « proxy »)."),
+    ('Facteurs d\'émission', "FE_token provient de votre table de facteurs en kgCO₂e par token (transmise le 23 octobre 2026), dont chaque ligne est marquée S (sourcé) ou H (hypothèse). Les modèles absents de la table sont calculés avec EcoLogits (carbon-footprint-modeling-tool de Boris Ruf, scénarios EcoLogits v2, commit 841bd2a du 9 novembre 2026) : FE = PUE (1,2) × énergie GPU + serveur par token × intensité du mix électrique + fabrication du matériel par token (scope 3). Les modèles de 2026 absents d'EcoLogits sont rattachés au scénario le plus proche (marqués « proxy »)."),
     ('Mix électrique', "Les régions d'hébergement des modèles ne sont pas publiées : le mix est traité en scénarios (France 2020 EEA 51,1 g/kWh par défaut ; UE 2025 IEA 170 ; Monde 2025 IEA 435 ; USA 2021 OWID 379 ; Azure USA 352,8 ; Monde EcoLogits 590,5). Les valeurs IEA portent sur le CO₂ seul."),
     ('Projection', "L'atterrissage de fin d'année prolonge le rythme quotidien moyen des N derniers jours de données (28 par défaut), ajusté du pourcentage choisi, jusqu'au 31 décembre. C'est une version simplifiée du modèle de projection du tableau HTML (utilisateurs × activité × usage × intensité) : Excel n'en reprend pas la fourchette P10–P90. La fourchette affichée applique au résultat central les multiplicateurs d'incertitude de Calcul (×0,5 et ×2 par défaut)."),
     ('Contrôles', "C1 complétude de l'import ; C2 cache supérieur à l'input ; C3 rapprochement des coûts par famille (rapport attendu entre 0,90 et 1,00) ; C4 cas particuliers ; C5 boucle globale des coûts ; C6 sensibilité aux facteurs et au mix. Les montants utilisés sont gross_amount (aic_gross_amount est vide dans les exports réels). Dans Excel, C3 est agrégé par famille sur toutes les lignes, alors que le tableau HTML teste les cinq lignes les plus discriminantes : la décision est la même sur l'export d'exemple."),
@@ -917,7 +917,7 @@ r += len(EXPORT) + 1
 wsH.cell(r, 2, 'Onglets').font = f(12, True); r += 1
 for t in ["Synthèse : indicateurs clés de l'année, tendance, graphique mensuel, modèles les plus émetteurs, phrases à retenir.",
           "Empreinte : tableau mois par mois (réel et projeté), répartition par modèle, cumul, série quotidienne, classement complet des modèles.",
-          "Projections 2030 : quatre abaques de croissance annuelle (utilisateurs, tokens par utilisateur, intensité par token) appliqués à l'atterrissage de l'année, modifiables, avec graphique et cumul 2027–2030.",
+          "Projections 2030 : quatre abaques de croissance annuelle (utilisateurs, tokens par utilisateur, intensité par token) appliqués à l'année de base extrapolée sur 12 mois, modifiables, avec graphique et cumul 2027–2030.",
           "Calcul : formules, réglages globaux et paramètres par modèle (prix, convention, e_O, facteurs).",
           "Démonstration : pour un modèle, le calcul déroulé étape par étape sur l'année choisie (formule, puis valeurs, jusqu'au CO₂e).",
           "Contrôles : C1 à C6.", "Méthodologie : sources et choix de méthode.", "Données : l'export collé et les colonnes calculées.",
@@ -935,10 +935,10 @@ setw(wsP, {'B': 26, 'C': 16, 'D': 16, 'E': 16, 'F': 16, 'G': 16, 'H': 16, 'I': 1
 section(wsP, 'B5', 'Base', 5)
 cellv(wsP, 'B6', 'Année de base', font=f(10, True)); cellv(wsP, 'C6', '=S_An', '0', align=Alignment(horizontal='right'))
 note(wsP, 'D6', "← année choisie dans Synthèse (cellule C6) ; base attendue : la dernière année des données")
-cellv(wsP, 'B7', 'CO₂e de la base (kg)', font=f(10, True)); cellv(wsP, 'C7', '=S_Land', F_KG0)
-cellv(wsP, 'D7', '=IF(S_Cur,"atterrissage au 31 décembre (rythme des "&P_N&" derniers jours, comme Synthèse)","bilan réel de l\'année")', font=f(9, color=MUTED))
-cellv(wsP, 'B8', 'Tokens éq. output (base)', font=f(10, True)); cellv(wsP, 'C8', '=IF(S_YTD>0,S_TO*S_Land/S_YTD,S_TO)', F_INT)
-note(wsP, 'D8', "tokens de l'année, extrapolés au 31 décembre au même rythme que le CO₂e")
+cellv(wsP, 'B7', 'CO₂e de la base (kg)', font=f(10, True)); cellv(wsP, 'C7', '=A_Base', F_KG0)
+cellv(wsP, 'D7', '=IF(NOT(S_Has),"importez un export pour calculer la base",IF(A_Miss>0,"année "&S_An&" extrapolée sur 12 mois : mesuré + rythme moyen des mois de référence × "&A_Miss&" jours sans donnée (détail en ligne 51)","bilan réel de l\'année (12 mois couverts)"))', font=f(9, color=MUTED))
+cellv(wsP, 'B8', 'Tokens éq. output (base)', font=f(10, True)); cellv(wsP, 'C8', '=A_BaseTO', F_INT)
+note(wsP, 'D8', "tokens de l'année, extrapolés sur 12 mois avec la même règle que le CO₂e")
 cellv(wsP, 'B9', 'Utilisateurs actifs (base)', font=f(10, True)); inp(wsP, 'C9', None, F_INT)
 note(wsP, 'D9', "← facultatif : nombre d'utilisateurs distincts de l'année (vue Synthèse du tableau HTML), pour le détail par utilisateur")
 cellv(wsP, 'B10', 'Abaque affiché', font=f(10, True)); inp(wsP, 'C10', 'B'); wsP['C10'].alignment = Alignment(horizontal='center')
@@ -963,15 +963,15 @@ section(wsP, 'B32', 'Projections', 9)
 head(wsP, 33, 2, ['Année'] + [f'{k} · {nm} (kgCO₂e)' for k, nm, *_ in ABQ] + ['Abaque affiché (kgCO₂e)', 'Tokens éq. output', 'Utilisateurs', 'gCO₂e / M tokens'])
 wsP.row_dimensions[33].height = 30
 cellv(wsP, 'B34', '=S_An', '0', f(10, True))
-for c in range(4): cellv(wsP, f'{"CDEF"[c]}34', '=S_Land', F_KG0, f(10, True))
-cellv(wsP, 'G34', '=S_Land', F_KG0, f(10, True, NAVY)); cellv(wsP, 'H34', '=A_Tok', F_INT, f(10, True)); cellv(wsP, 'I34', '=IF(ISNUMBER(A_U),A_U,"")', F_INT, f(10, True))
+for c in range(4): cellv(wsP, f'{"CDEF"[c]}34', '=A_Base', F_KG0, f(10, True))
+cellv(wsP, 'G34', '=A_Base', F_KG0, f(10, True, NAVY)); cellv(wsP, 'H34', '=A_Tok', F_INT, f(10, True)); cellv(wsP, 'I34', '=IF(ISNUMBER(A_U),A_U,"")', F_INT, f(10, True))
 cellv(wsP, 'J34', '=IF(H34>0,G34*1000/(H34/1000000),"")', '#,##0', f(10, True))
 for n, y in enumerate(ABQ_Y):
     r = 35 + n; p = r - 1
     cellv(wsP, f'B{r}', y, '0')
     for a in range(4):
         c = "CDEF"[a]; cr = 17 + 4 * a
-        cellv(wsP, f'{c}{r}', f'=IF($B{r}<=S_An,"",IF(ISNUMBER({c}{p}),{c}{p},S_Land)*(1+INDEX($D${cr}:$G${cr},$B{r}-2026)))', F_KG0)
+        cellv(wsP, f'{c}{r}', f'=IF($B{r}<=S_An,"",IF(ISNUMBER({c}{p}),{c}{p},A_Base)*(1+INDEX($D${cr}:$G${cr},$B{r}-2026)))', F_KG0)
     sel_row = 'INDEX($D$14:$G$29,4*(CODE(A_Sel)-65)+{k},$B'+str(r)+'-2026)'
     cellv(wsP, f'G{r}', f'=IF($B{r}<=S_An,"",CHOOSE(CODE(A_Sel)-64,C{r},D{r},E{r},F{r}))', F_KG0, f(10, True, NAVY))
     cellv(wsP, f'H{r}', f'=IF($B{r}<=S_An,"",IF(ISNUMBER(H{p}),H{p},A_Tok)*(1+{sel_row.format(k=1)})*(1+{sel_row.format(k=2)}))', F_INT)
@@ -980,7 +980,7 @@ for n, y in enumerate(ABQ_Y):
 cellv(wsP, 'B39', 'Cumul 2027–2030', font=f(10, True))
 for c in 'CDEFGH': cellv(wsP, f'{c}39', f'=SUM({c}35:{c}38)', F_INT if c == 'H' else F_KG0, f(10, True))
 for c in 'BCDEFGHIJ': wsP[f'{c}39'].border = Border(top=thin)
-para(wsP, 41, 2, '="Abaque "&A_Sel&" : "&' + txt_kg('G38') + '&" en 2030, soit ×"&FIXED(IF(S_Land>0,G38/S_Land,0),1)&" par rapport à "&S_An&" ; cumul 2027–2030 : "&' + txt_kg('G39') + '&". Fourchette entre abaques en 2030 : "&' + txt_kg('MIN(C38:F38)') + '&" à "&' + txt_kg('MAX(C38:F38)') + '&"."', 9, 32, 10, INK2, True)
+para(wsP, 41, 2, '="Abaque "&A_Sel&" : "&' + txt_kg('G38') + '&" en 2030, soit ×"&FIXED(IF(A_Base>0,G38/A_Base,0),1)&" par rapport à "&S_An&" ; cumul 2027–2030 : "&' + txt_kg('G39') + '&". Fourchette entre abaques en 2030 : "&' + txt_kg('MIN(C38:F38)') + '&" à "&' + txt_kg('MAX(C38:F38)') + '&"."', 9, 32, 10, INK2, True)
 ch = LineChart()
 ch.add_data(Reference(wsP, min_col=3, max_col=6, min_row=33, max_row=38), titles_from_data=True)
 ch.set_categories(Reference(wsP, min_col=2, min_row=34, max_row=38))
@@ -994,8 +994,40 @@ SRC_A = ["Hypothèses de travail pour une première modélisation : aucune sourc
          "B · Central : les utilisateurs occasionnels deviennent réguliers (Gartner, juin 2026) ; consommation électrique des serveurs IA en hausse d'environ 30 %/an et gains d'efficacité (AIE, Energy and AI, 2025).",
          "C · Agentique généralisé : tokens par utilisateur ×18 et coût médian ×16 entre août 2025 et mai 2026, jusqu'à 35 % des PR ouvertes par des agents (Jellyfish, S1 2026), avec un ralentissement après 2027.",
          "D · Budget plafonné : sans gouvernance, le coût de l'IA de code dépasserait le salaire moyen d'un développeur d'ici 2028 (Gartner, juin 2026) ; ici la dépense par utilisateur est encadrée et le volume ne croît qu'avec la baisse du prix par token.",
-         "Limites : la baisse de l'intensité par token est l'hypothèse la plus fragile ; les tokens de la base sont extrapolés au rythme du CO₂e ; l'écart entre abaques donne l'incertitude de croissance. Le tableau HTML (onglet Projections 2030) détaille les liens vers les sources."]
+         "Limites : la baisse de l'intensité par token est l'hypothèse la plus fragile ; l'extrapolation de l'année de base suppose un rythme constant (ni croissance ni saisonnalité au-delà des mois de référence) ; l'écart entre abaques donne l'incertitude de croissance. Le tableau HTML (onglet Projections 2030) détaille les liens vers les sources."]
 for n, t in enumerate(SRC_A): para(wsP, 44 + n, 2, t, 9, 30, 9, INK2 if n else MUTED)
+# Extrapolation de l'année de base sur 12 mois
+section(wsP, 'B51', "Extrapolation de l'année de base sur 12 mois", 9)
+para(wsP, 52, 2, "Règle : les jours couverts par l'export gardent leur valeur mesurée. Chaque jour sans donnée de l'année (mois antérieurs au début de l'export, mois absents de l'export, jours après le dernier jour de données jusqu'au 31 décembre) reçoit le rythme journalier moyen des mois de référence (mois complets de l'année), week-ends et jours fériés compris. Sans mois complet, le rythme est calculé sur tous les jours couverts. Les tokens suivent la même règle.", 9, 44, 9, INK2)
+cellv(wsP, 'B53', 'Mois de référence', font=f(10, True)); inp(wsP, 'C53', 'Tous les mois complets')
+dv = DataValidation(type='list', formula1='"Tous les mois complets,3 derniers mois complets"', allow_blank=False); wsP.add_data_validation(dv); dv.add('C53')
+wsP.merge_cells('C53:D53'); note(wsP, 'E53', "← ou « 3 derniers mois complets » si l'usage croît vite")
+name('A_Ext', "'Projections 2030'!$C$53")
+head(wsP, 55, 2, ['Mois', 'Jours', 'Jours couverts', 'Statut', 'Mesuré (kgCO₂e)', 'Estimé (kgCO₂e)', 'Retenu (kgCO₂e)', 'Tokens mesurés', 'Référence', 'rang si complet'])
+MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+for i, mo in enumerate(MOIS, 1):
+    r = 55 + i; a = f'DATE(S_An,{i},1)'; b = f'EOMONTH({a},0)'
+    cellv(wsP, f'B{r}', mo)
+    cellv(wsP, f'C{r}', f'=DAY({b})', '0')
+    cellv(wsP, f'D{r}', f'=IF(COUNTIFS(D_Jour,">="&{a},D_Jour,"<="&{b})=0,0,MAX(0,MIN({b},S_Last)-MAX({a},S_First)+1))', '0')
+    cellv(wsP, f'E{r}', f'=IF(D{r}=C{r},"Mesuré (complet)",IF(D{r}>0,"Mesuré en partie","Estimé"))')
+    cellv(wsP, f'F{r}', f'=SUMIFS(D_CO2,D_Jour,">="&{a},D_Jour,"<="&{b})', F_KG0)
+    cellv(wsP, f'G{r}', f'=A_Rate*(C{r}-D{r})', F_KG0)
+    cellv(wsP, f'H{r}', f'=F{r}+G{r}', F_KG0, f(10, True, NAVY))
+    cellv(wsP, f'I{r}', f'=SUMIFS(D_TO,D_Jour,">="&{a},D_Jour,"<="&{b})', F_INT)
+    cellv(wsP, f'J{r}', f'=IF(K{r}=0,0,IF(A_Ext="3 derniers mois complets",IF(K{r}>=LARGE($K$56:$K$67,3),1,0),1))', '"●";"";""', align=Alignment(horizontal='center'))
+    cellv(wsP, f'K{r}', f'=IF(D{r}=C{r},{i},0)', '0', f(9, color=MUTED))
+cellv(wsP, 'B68', 'Année', font=f(10, True))
+for c, fm in [('C', F_INT), ('D', F_INT), ('F', F_KG0), ('G', F_KG0), ('H', F_KG0), ('I', F_INT)]: cellv(wsP, f'{c}68', f'=SUM({c}56:{c}67)', fm, f(10, True))
+for c in 'BCDEFGHIJK': wsP[f'{c}68'].border = Border(top=thin)
+X = [('A_NRef', 'Mois de référence retenus', '=SUM(J56:J67)', '0'),
+     ('A_Rate', 'Rythme retenu (kgCO₂e/jour)', '=IF(A_NRef>0,SUMPRODUCT(J56:J67,F56:F67)/SUMPRODUCT(J56:J67,D56:D67),IF(D68>0,F68/D68,0))', '0.000'),
+     ('A_RateT', 'Rythme retenu (tokens éq. output/jour)', '=IF(A_NRef>0,SUMPRODUCT(J56:J67,I56:I67)/SUMPRODUCT(J56:J67,D56:D67),IF(D68>0,I68/D68,0))', F_INT),
+     ('A_Miss', 'Jours sans donnée', '=C68-D68', '0'),
+     ('A_Base', 'CO₂e de la base extrapolée (kg)', '=H68', F_KG0),
+     ('A_BaseTO', 'Tokens éq. output de la base extrapolée', '=I68+A_RateT*A_Miss', F_INT)]
+for n, (nm, lab, fm, fmt) in enumerate(X):
+    r = 70 + n; cellv(wsP, f'B{r}', lab, font=f(10, True)); cellv(wsP, f'C{r}', fm, fmt); name(nm, f"'Projections 2030'!$C${r}")
 wsP.freeze_panes = 'A5'
 
 wsI.sheet_state = 'visible'

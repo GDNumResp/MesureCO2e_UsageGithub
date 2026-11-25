@@ -23,7 +23,7 @@ Pour chaque ligne de l'export (un jour, un utilisateur, un modèle) :
 1. **Tokens d'entrée frais** : `F = I − δ·CR − ε·CW`, où `I` est l'input, `CR` le cache lu et `CW` le cache écrit. Les coefficients δ et ε dépendent de la convention de comptage du fournisseur (cache inclus ou non dans l'input).
 2. **Tokens équivalent-sortie** : `T_O = F·s_I + CR·s_CR + CW·s_CW + O`. Chaque type de token est ramené à un token de sortie selon le rapport de prix de la grille GitHub (`s_I = prix input / prix output`, etc.).
 3. **Énergie** : `E (kWh) = T_O × e_O × PUE / 1000`.
-4. **Carbone** : `CO2e (kg) = T_O × facteur d'émission par token` (table de facteurs par modèle). Une variante calcule `E × mix électrique + fabrication`, à partir des scénarios EcoLogits v2 du « Calculateur de Boris » (borisruf/carbon-footprint-modeling-tool). Les modèles absents de ce calculateur sont rapprochés d'un modèle proche.
+4. **Carbone** : `CO2e (kg) = T_O × facteur d'émission par token` (table de facteurs par modèle). Une variante calcule `E × mix électrique + fabrication`, à partir des scénarios EcoLogits v2 (borisruf/carbon-footprint-modeling-tool). Les modèles absents d'EcoLogits sont rapprochés d'un modèle proche.
 
 Des **contrôles** automatiques (C1 à C6) vérifient la cohérence de l'export : structure des tokens, convention de cache, rapprochement des coûts recalculés avec `gross_amount` (rapport attendu entre 0,90 et 1,00), et sensibilité aux hypothèses. Une **projection** jusqu'au 31 décembre donne l'atterrissage de l'année avec une fourchette.
 
@@ -33,7 +33,7 @@ Tous les paramètres (formules, facteurs, rapports de prix, PUE, mix électrique
 
 1. Téléchargez `empreinte-carbone-copilot.html` (bouton *Download raw file* sur GitHub) et ouvrez-le dans Edge, Chrome ou Firefox (Edge 111 minimum). Aucune installation et aucune connexion ne sont nécessaires : tout tourne dans le navigateur et les données ne quittent pas le poste.
 2. Cliquez sur **Importer l'extraction GitHub** et choisissez (ou glissez-déposez) le CSV de facturation GitHub Copilot (colonnes `date, username, product, sku, model, quantity, …, input, output, cache_read, cache_write`). Pour essayer, prenez `exemple-export-copilot.csv`.
-3. Naviguez dans les onglets : **Synthèse** (chiffres clés, tendance, atterrissage), **Empreinte** (détail par modèle, cumul, intensité, coûts), **Projections 2030** (quatre abaques de croissance annuelle à 2030, A Sobriété, B Central, C Agentique généralisé, D Budget plafonné : l'atterrissage de l'année multiplié chaque année par l'évolution des utilisateurs, des tokens par utilisateur et de l'intensité par token, taux modifiables, graphique, tableau et export CSV), **Calcul** (paramètres et projection), **Démonstration** (le calcul d'un modèle déroulé étape par étape sur la période choisie : chaque formule écrite avec ses symboles, puis avec les vraies valeurs, jusqu'au CO2e), **Contrôles**, **Méthodologie**.
+3. Naviguez dans les onglets : **Synthèse** (chiffres clés, tendance, atterrissage), **Empreinte** (détail par modèle, cumul, intensité, coûts), **Projections 2030** (quatre abaques de croissance annuelle à 2030, A Sobriété, B Central, C Agentique généralisé, D Budget plafonné : l'année de base extrapolée sur 12 mois (jours sans donnée estimés au rythme journalier moyen des mois complets) puis multipliée chaque année par l'évolution des utilisateurs, des tokens par utilisateur et de l'intensité par token, taux modifiables, graphique, tableau et export CSV), **Calcul** (paramètres et projection), **Démonstration** (le calcul d'un modèle déroulé étape par étape sur la période choisie : chaque formule écrite avec ses symboles, puis avec les vraies valeurs, jusqu'au CO2e), **Contrôles**, **Méthodologie**.
 4. Les réglages modifiés sont gardés dans le navigateur. Les exports CSV de résultats s'ouvrent directement dans Excel en français. Dans l'onglet **Calcul**, le bouton **Exporter en Excel** télécharge le tableau « Paramètres par modèle » au format `.xlsx` (valeurs appliquées, valeurs modifiées surlignées, avec une feuille de contexte : mix, formules, date).
 
 ## Utiliser le classeur Excel
@@ -41,7 +41,7 @@ Tous les paramètres (formules, facteurs, rapports de prix, PUE, mix électrique
 1. Ouvrez `empreinte-carbone-copilot-modele.xlsx`.
 2. Dans l'onglet **Données**, collez l'export en cellule `A2` (sans la ligne d'en-tête). Les colonnes bleues se calculent seules.
 3. Choisissez l'année dans la cellule jaune de **Synthèse**. Les cellules jaunes de **Calcul** sont modifiables, et tout le classeur se recalcule.
-4. L'onglet **Projections 2030** applique les mêmes quatre abaques à l'atterrissage de l'année choisie (taux modifiables en jaune, abaque affiché en `C10`).
+4. L'onglet **Projections 2030** applique les mêmes quatre abaques à l'année choisie extrapolée sur 12 mois avec la même règle (détail mois par mois à partir de la ligne 51, mois de référence au choix en `C53`, taux modifiables en jaune, abaque affiché en `C10`).
 5. L'onglet **Démonstration** déroule le calcul d'un modèle de la table Calcul pour l'année choisie : la formule, puis la même formule avec les valeurs, jusqu'au CO2e.
 
 Le classeur reprend la logique du tableau HTML, avec quelques simplifications : projection au rythme moyen des 28 derniers jours (sans fourchette P10–P90), contrôle des coûts agrégé par famille de modèles, français uniquement, pas de filtre par utilisateur. Il n'utilise que des fonctions compatibles Excel 2007.
@@ -56,7 +56,7 @@ cd tableau-carbone/source-excel
 ./make.sh empreinte-carbone-copilot-exemple ../exemple-export-copilot.csv      # classeur rempli
 ```
 
-- `build.py` écrit le classeur (onglets, formules, graphiques) à partir de `src.json` (grille de prix GitHub et familles de modèles) et `eco.json` (scénarios EcoLogits v2 du Calculateur de Boris).
+- `build.py` écrit le classeur (onglets, formules, graphiques) à partir de `src.json` (grille de prix GitHub et familles de modèles) et `eco.json` (scénarios EcoLogits v2, publiés par borisruf/carbon-footprint-modeling-tool).
 - LibreOffice recalcule le classeur, puis `inject.py` recopie les valeurs calculées dans le fichier d'origine, pour qu'il s'affiche rempli dès l'ouverture sans perdre les colonnes calculées du tableau Excel.
 
 Le tableau HTML n'a pas d'étape de construction : le fichier `.html` est lui-même la source. Après chaque modification, la copie `.txt` est mise à jour à l'identique.
