@@ -2418,7 +2418,12 @@ function abqRates(k){ const o=(P.abq&&P.abq.r&&P.abq.r[k])||{}; const d=ABQ_DEF[
 function abqSetRate(k,v,j,val){ P.abq=P.abq||{}; P.abq.r=P.abq.r||{}; const r=P.abq.r[k]=P.abq.r[k]||{}; r[v]=r[v]||[null,null,null,null]; r[v][j]=val; saveParams(); }
 const abqIdx=y=>Math.max(0,Math.min(ABQ_YEARS.length-1,y-ABQ_YEARS[0]));
 // Base : dernière année des données, filtres modèles et utilisateurs appliqués (la période choisie n'est pas utilisée).
-// Année en cours : atterrissage au 31 décembre avec la méthode de projection de la vue Calcul ; tokens extrapolés au même rythme que le CO₂e.
+// Année incomplète : les jours couverts par l'export gardent leur valeur réelle ; chaque jour sans donnée de l'année
+// (avant le début de l'export, mois absents de l'export, après le dernier jour jusqu'au 31 décembre) reçoit le rythme
+// journalier moyen des mois complets observés (P.abq.ext : "tous" = tous les mois complets, "3m" = les 3 derniers).
+// Couverture jugée sur l'export entier (sans filtre) : un mois de l'export sans ligne pour le modèle filtré compte pour 0, pas comme manquant.
+const abqExt=()=>P.abq&&P.abq.ext==="3m"?"3m":"tous";
+const abqQ=(a,p)=>{ const s=[...a].sort((x,y)=>x-y); if (!s.length) return 0; const i=(s.length-1)*p, lo=Math.floor(i); return s[lo]+(s[Math.min(lo+1,s.length-1)]-s[lo])*(i-lo); };
 function abqBase(){
   const ds=allDates(); if (!ds.length || !ALL) return null;
   const act=FDIMS.filter(d=>FSEL[d.k] && d.ok()); const rows=ALL.filter(x=>act.every(d=>FSEL[d.k].has(d.f(x.r))));
@@ -2426,12 +2431,22 @@ function abqBase(){
   const last=ds.at(-1), Y=+last.slice(0,4); const years=new Map();
   for (const x of rows){ const y=+x.r.date.slice(0,4); let a=years.get(y); if (!a){ a={g:0,TO:0,kwh:0,u:new Set(),d0:x.r.date,d1:x.r.date}; years.set(y,a); } a.g+=x.g; a.TO+=x.TO; a.kwh+=x.kwh; a.u.add(x.r.user); if (x.r.date<a.d0) a.d0=x.r.date; if (x.r.date>a.d1) a.d1=x.r.date; }
   const cur=years.get(Y); if (!cur) return null;
-  let G=cur.g, band=null, landed=false;
-  if (last.slice(5)!=="12-31"){ const byDay=new Map(); for (const x of rows) if (+x.r.date.slice(0,4)===Y) byDay.set(x.r.date,(byDay.get(x.r.date)||0)+x.g);
-    const first=ds[0]>`${Y}-01-01`?ds[0]:`${Y}-01-01`; const pj=project(byDay, first, last, {...projOpt(), h:"year"}); if (pj){ G=pj.P; band=pj.band; landed=true; } }
-  const k=cur.g>0?G/cur.g:1;
+  // mois de l'année : jours couverts par l'export, valeurs réelles du périmètre filtré
+  const y0=`${Y}-01-01`, y1=`${Y}-12-31`, w0=ds[0]>y0?ds[0]:y0, w1=last<y1?last:y1;
+  const inExp=new Set(); for (const d of ds) if (d.startsWith(String(Y))) inExp.add(d.slice(0,7));
+  const mg=new Map(), mt=new Map(); for (const x of rows) if (x.r.date.startsWith(String(Y))){ const m=x.r.date.slice(0,7); mg.set(m,(mg.get(m)||0)+x.g); mt.set(m,(mt.get(m)||0)+x.TO); }
+  const months=[]; for (let i=1;i<=12;i++){ const m=`${Y}-${pad2(i)}`, n=dim(m), a=`${m}-01`, b=`${m}-${pad2(n)}`; const lo=a>w0?a:w0, hi=b<w1?b:w1;
+    const obs=inExp.has(m)&&lo<=hi ? Math.round((Date.parse(hi)-Date.parse(lo))/864e5)+1 : 0;
+    months.push({m, n, g:mg.get(m)||0, TO:mt.get(m)||0, obs, miss:n-obs, st:obs===n?"complet":obs>0?"partiel":"manquant"}); }
+  const ext=abqExt(), comp=months.filter(q=>q.st==="complet"), pool=ext==="3m"?comp.slice(-3):comp;
+  const src=pool.length?pool:months.filter(q=>q.obs>0); const D=sum(src,q=>q.obs);
+  const rg=D?sum(src,q=>q.g)/D:0, rt=D?sum(src,q=>q.TO)/D:0, miss=sum(months,q=>q.miss);
+  for (const q of months){ q.eg=rg*q.miss; q.et=rt*q.miss; }
+  const G=cur.g+rg*miss, TO=cur.TO+rt*miss;
+  // fourchette : 10e et 90e centiles des rythmes journaliers des mois de référence (3 mois au moins)
+  let band=null; if (miss>0 && pool.length>=3){ const r=pool.map(q=>q.g/q.n); band={lo:cur.g+Math.min(rg,abqQ(r,.1))*miss, hi:cur.g+Math.max(rg,abqQ(r,.9))*miss}; }
   const hist=[...years.entries()].filter(([y])=>y<Y).sort((a,b)=>a[0]-b[0]).map(([y,a])=>({y, g:a.g, TO:a.TO, U:a.u.size, partial:ds[0]>`${y}-01-01`||last<`${y}-12-31`}));
-  return {Y, last, g:G, gYtd:cur.g, TO:cur.TO*k, U:cur.u.size, band, landed, partial:ds[0]>`${Y}-01-01`, hist};
+  return {Y, last, g:G, gYtd:cur.g, TO, U:cur.u.size, band, landed:miss>0, months, rate:rg, rateTO:rt, miss, ref:src, refComplete:pool.length>0, ext, hist};
 }
 function abqSeries(base,k){ const R=abqRates(k); const out=[]; let U=base.U||1, T=base.TO/(base.U||1), I=base.TO>0?base.g/base.TO:0;
   for (let y=base.Y+1; y<=ABQ_YEARS.at(-1); y++){ const j=abqIdx(y); U*=1+R.u[j]/100; T*=1+R.t[j]/100; I*=1+R.i[j]/100; out.push({y, U, T, TO:U*T, I, g:U*T*I}); }
@@ -2447,14 +2462,14 @@ function renderAbq(){
   const p1=el("section",{class:"panel"});
   const hd=el("div",{class:"panel-head"}); const ht=el("div",{class:"t"});
   ht.append(el("h2",{text:L(`Projections annuelles jusqu'en ${endY}`,`Annual projections to ${endY}`)}),
-    el("p",{class:"small muted",text:L(`Base : ${base.landed?`atterrissage ${base.Y} (données au ${frDate(base.last)}, méthode « ${PROJ_METHODS[projOpt().m].label.toLowerCase()} » de la vue Calcul)`:`bilan ${base.Y}`}, puis chaque année multipliée par l'évolution des utilisateurs, des tokens par utilisateur et de l'intensité par token. Les filtres modèles et utilisateurs s'appliquent ; la période choisie n'est pas utilisée.`,
-      `Base: ${base.landed?`${base.Y} landing (data to ${frDate(base.last)}, “${PROJ_METHODS[projOpt().m].label.toLowerCase()}” method from the Calculation view)`:`${base.Y} total`}, then each year multiplied by the change in users, tokens per user and intensity per token. Model and user filters apply; the selected period is not used.`)}));
+    el("p",{class:"small muted",text:L(`Base : ${base.landed?`année ${base.Y} extrapolée sur 12 mois (données au ${frDate(base.last)}, règle détaillée ci-dessous)`:`bilan ${base.Y}`}, puis chaque année multipliée par l'évolution des utilisateurs, des tokens par utilisateur et de l'intensité par token. Les filtres modèles et utilisateurs s'appliquent ; la période choisie n'est pas utilisée.`,
+      `Base: ${base.Y} ${base.landed?`extrapolated to 12 months (data to ${frDate(base.last)}, rule detailed below)`:"total"}, then each year multiplied by the change in users, tokens per user and intensity per token. Model and user filters apply; the selected period is not used.`)}));
   const rb=el("button",{class:"btn",type:"button",text:L("Rétablir les abaques par défaut","Restore the default scenarios")}); rb.addEventListener("click",()=>{ delete P.abq; saveParams(); renderAbq(); });
   hd.append(ht, rb); p1.append(hd);
   if (base.Y>=endY){ p1.append(el("p",{class:"muted",text:L(`Les données vont déjà jusqu'en ${base.Y} : rien à projeter.`,`The data already reaches ${base.Y}: nothing to project.`)})); box.append(p1); return; }
   const kp=el("div",{class:"kpis mini"});
   const [bv,bu]=co2(base.g);
-  kp.append(tile("",base.landed?L(`Base · atterrissage ${base.Y}`,`Base · ${base.Y} landing`):L(`Base · bilan ${base.Y}`,`Base · ${base.Y} total`),bv,bu, base.band?L(`Fourchette ${co2s(base.band.lo)} – ${co2s(base.band.hi)}`,`Range ${co2s(base.band.lo)} – ${co2s(base.band.hi)}`):(base.landed?L(`${co2s(base.gYtd)} déjà émis`,`${co2s(base.gYtd)} already emitted`):L("Valeur réelle","Actual value"))));
+  kp.append(tile("",base.landed?L(`Base · ${base.Y} extrapolée`,`Base · ${base.Y} extrapolated`):L(`Base · bilan ${base.Y}`,`Base · ${base.Y} total`),bv,bu, base.landed?L(`${co2s(base.gYtd)} mesurés + ${co2s(base.g-base.gYtd)} estimés${base.band?` · fourchette ${co2s(base.band.lo)} – ${co2s(base.band.hi)}`:""}`,`${co2s(base.gYtd)} measured + ${co2s(base.g-base.gYtd)} estimated${base.band?` · range ${co2s(base.band.lo)} – ${co2s(base.band.hi)}`:""}`):L("Valeur réelle","Actual value")));
   for (const k of keys){ const s=S[k], e=s.at(-1); const n=s.length; const cagr=Math.pow(e.g/(base.g||1),1/n)-1; const cum=sum(s,x=>x.g); const [v,u]=co2(e.g);
     const t=tile(k===sel?"hero":"",`${k} · ${ABQ_NAME(k)}${k==="B"?L(" (recommandé)"," (recommended)"):""}`,v,u,L(`${endY} · ×${nf(1).format(e.g/(base.g||1))} vs ${base.Y} · ${abqSigned(cagr*100)}/an · cumul ${s[0].y}–${endY} ${co2s(cum)}`,`${endY} · ×${nf(1).format(e.g/(base.g||1))} vs ${base.Y} · ${abqSigned(cagr*100)}/yr · ${s[0].y}–${endY} total ${co2s(cum)}`));
     t.classList.add("clickf"); t.style.cursor="pointer"; t.setAttribute("role","button"); t.setAttribute("tabindex","0"); t.setAttribute("aria-pressed",String(k===sel)); t.title=L("Afficher cet abaque","Show this scenario");
@@ -2462,11 +2477,9 @@ function renderAbq(){
     const pick=()=>{ P.abq=P.abq||{}; P.abq.sel=k; saveParams(); renderAbq(); }; t.addEventListener("click",pick); t.addEventListener("keydown",ev=>{ if (ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); pick(); } });
     kp.append(t); }
   p1.append(kp, el("p",{class:"small ink2",style:"margin:0",text:`${sel} · ${ABQ_NAME(sel)}${L(" : ",": ")}${ABQ_DESC(sel)}`}));
-  if (base.partial) p1.append(el("p",{class:"small",style:"color:var(--warn);margin:0",text:L(`Les données commencent le ${frDate(allDates()[0])} : la base ${base.Y} ne couvre pas toute l'année, les projections partent donc d'une année incomplète.`,`The data starts on ${frDate(allDates()[0])}: the ${base.Y} base does not cover the whole year, so projections start from an incomplete year.`)}));
-  { const zn=base.landed&&projOpt().m==="tendance"?linZeroNote((()=>{ const byDay=new Map(); const act=FDIMS.filter(d=>FSEL[d.k]&&d.ok()); for (const x of ALL) if (+x.r.date.slice(0,4)===base.Y && act.every(d=>FSEL[d.k].has(d.f(x.r)))) byDay.set(x.r.date,(byDay.get(x.r.date)||0)+x.g); const ds=allDates(); return project(byDay, ds[0]>`${base.Y}-01-01`?ds[0]:`${base.Y}-01-01`, base.last, {...projOpt(), h:"year"}); })()):""; if (zn) p1.append(el("p",{class:"small",style:"color:var(--warn);margin:0",text:zn})); }
   // graphique : réel des années précédentes, base, puis un trait par abaque
   const hist=base.hist.filter(h=>!h.partial || h.y>=base.Y-3).slice(-4);
-  const lgi=[]; if (hist.length) lgi.push(["line","--accent",L("Réel","Actual")]); lgi.push(["dot","--accent",base.landed?L(`Atterrissage ${base.Y}`,`${base.Y} landing`):L(`Bilan ${base.Y}`,`${base.Y} total`)]); if (base.band) lgi.push(["whisker","--muted",L("Fourchette P10–P90 de l'atterrissage","P10–P90 range of the landing")]);
+  const lgi=[]; if (hist.length) lgi.push(["line","--accent",L("Réel","Actual")]); lgi.push(["dot","--accent",base.landed?L(`${base.Y} extrapolée`,`${base.Y} extrapolated`):L(`Bilan ${base.Y}`,`${base.Y} total`)]); if (base.band) lgi.push(["whisker","--muted",L("Fourchette P10–P90 de l'extrapolation","P10–P90 range of the extrapolation")]);
   for (const k of keys) lgi.push(["dline",ABQ_COL[k],`${k} · ${ABQ_NAME(k)}`]);
   if (base.band) lgi.push(["band",ABQ_COL[sel],L(`Fourchette de la base reportée sur ${sel}`,`Base range carried over to ${sel}`)]);
   const lg=legendRow(lgi); lg.style.margin="4px 0 0"; p1.append(lg);
@@ -2500,11 +2513,12 @@ function renderAbq(){
   svgTip(svg, W, H, {l:m.l,t:m.t,w:iw,h:ih}, sx=>{ let y=years[0]; for (const yy of years) if (Math.abs(x(yy)-sx)<Math.abs(x(y)-sx)) y=yy;
     const h=hist.find(q=>q.y===y);
     if (h) return {gx:x(y), nodes:[tipHead(String(y), co2s(h.g)), tipRow(L("Réel","Actual"), co2s(h.g), "--accent"), ...(h.partial?[tipNote(L("Année incomplète dans les données","Incomplete year in the data"))]:[])]};
-    if (y===base.Y){ const n=[tipHead(String(y), co2s(base.g)), tipRow(base.landed?L("Atterrissage","Landing"):L("Bilan","Total"), co2s(base.g), "--accent")]; if (base.landed) n.push(tipRow(L("Déjà émis","Already emitted"), co2s(base.gYtd))); if (base.band) n.push(tipRow(L("Fourchette P10–P90","P10–P90 range"), `${co2s(base.band.lo)} – ${co2s(base.band.hi)}`)); return {gx:x(y), nodes:n}; }
+    if (y===base.Y){ const n=[tipHead(String(y), co2s(base.g)), tipRow(base.landed?L("Extrapolée sur 12 mois","Extrapolated to 12 months"):L("Bilan","Total"), co2s(base.g), "--accent")]; if (base.landed){ n.push(tipRow(L("Mesuré","Measured"), co2s(base.gYtd))); n.push(tipRow(L("Estimé","Estimated"), co2s(base.g-base.gYtd))); } if (base.band) n.push(tipRow(L("Fourchette P10–P90","P10–P90 range"), `${co2s(base.band.lo)} – ${co2s(base.band.hi)}`)); return {gx:x(y), nodes:n}; }
     const n=[tipHead(String(y), L("Projection","Projection"))]; for (const k of keys){ const q=S[k].find(z=>z.y===y); n.push(tipRow(`${k} · ${ABQ_NAME(k)}`, co2s(q.g), ABQ_COL[k])); }
     const q=S[sel].find(z=>z.y===y); n.push(tipNote(L(`${sel} : ${DATA.hasUser?fmtInt(q.U)+" utilisateurs · ":""}${fmtTok(q.TO)} tokens éq. output`,`${sel}: ${DATA.hasUser?fmtInt(q.U)+" users · ":""}${fmtTok(q.TO)} output-eq. tokens`))); if (base.band) n.push(tipNote(L(`Fourchette reportée : ${co2s(q.g*kLo)} – ${co2s(q.g*kHi)}`,`Carried-over range: ${co2s(q.g*kLo)} – ${co2s(q.g*kHi)}`)));
     return {gx:x(y), nodes:n}; });
   cw.append(svg);
+  if (base.landed) box.append(abqExtPanel(base));
   // 2. hypothèses de l'abaque choisi, modifiables
   const p2=el("section",{class:"panel"}); const h2=el("div",{class:"panel-head"}); h2.append(el("div",{class:"t"}, el("h3",{text:L(`Hypothèses de l'abaque ${sel} · ${ABQ_NAME(sel)}`,`Scenario ${sel} · ${ABQ_NAME(sel)} assumptions`)}), el("p",{class:"small muted",text:L("Évolution annuelle en %, par rapport à l'année précédente. Modifiez une case puis quittez le champ : tout l'onglet est recalculé. Valeur modifiée surlignée ; videz la case pour revenir à la valeur par défaut. Intensité à 0 % = facteurs d'émission figés, comme dans le reste du tableau de bord.","Annual change in %, compared with the previous year. Edit a cell then leave the field: the whole tab is recomputed. Modified values are highlighted; clear the cell to go back to the default. Intensity at 0% = frozen emission factors, as in the rest of the dashboard.")})));
   p2.append(h2, el("div",{class:"formula"}, el("b",{text:L("CO₂e(N) = CO₂e(N−1) × (1 + u) × (1 + t) × (1 + i)","CO₂e(N) = CO₂e(N−1) × (1 + u) × (1 + t) × (1 + i)")}), el("br"), document.createTextNode(L("u : évolution des utilisateurs actifs · t : évolution des tokens éq. output par utilisateur · i : évolution de l'intensité (gCO₂e par token éq. output : mix des modèles, efficacité, mix électrique)","u: change in active users · t: change in output-eq. tokens per user · i: change in intensity (gCO₂e per output-eq. token: model mix, efficiency, electricity mix)"))));
@@ -2528,7 +2542,7 @@ function renderAbq(){
   const right=[0,0,1,1,1,1,1,...keys.map(()=>1)]; const rows=[]; let prev=null;
   const ev=(v,p)=>p>0?abqSigned((v/p-1)*100):"—";
   for (const h of hist){ rows.push([String(h.y), h.partial?L("Réel (année incomplète)","Actual (incomplete year)"):L("Réel","Actual"), DATA.hasUser?fmtInt(h.U):"—", fmtTok(h.TO), h.TO?fmtSig(h.g/h.TO*1e6):"—", co2s(h.g), prev&&!h.partial?ev(h.g,prev):"—", ...keys.map(()=>"")]); prev=h.partial?null:h.g; }
-  rows.push([String(base.Y), base.landed?L("Atterrissage","Landing"):L("Réel","Actual"), DATA.hasUser?fmtInt(base.U):"—", fmtTok(base.TO), base.TO?fmtSig(base.g/base.TO*1e6):"—", co2s(base.g), prev?ev(base.g,prev):"—", ...keys.map(()=>co2s(base.g))]);
+  rows.push([String(base.Y), base.landed?L("Extrapolée","Extrapolated"):L("Réel","Actual"), DATA.hasUser?fmtInt(base.U):"—", fmtTok(base.TO), base.TO?fmtSig(base.g/base.TO*1e6):"—", co2s(base.g), prev?ev(base.g,prev):"—", ...keys.map(()=>co2s(base.g))]);
   let pv=base.g; for (const q of S[sel]){ rows.push([String(q.y), L("Projection","Projection"), DATA.hasUser?fmtInt(q.U):"—", fmtTok(q.TO), fmtSig(q.I*1e6), co2s(q.g), ev(q.g,pv), ...keys.map(k=>co2s(S[k].find(z=>z.y===q.y).g))]); pv=q.g; }
   rows.push([`${S[sel][0].y}–${endY}`, L("Cumul","Total"), "", fmtTok(sum(S[sel],q=>q.TO)), "", co2s(sum(S[sel],q=>q.g)), "", ...keys.map(k=>co2s(sum(S[k],q=>q.g)))]);
   const tt=table(head,right,rows); tt.querySelectorAll("tbody tr").forEach((tr,i)=>{ tr.querySelectorAll("td").forEach(td=>td.classList.add("num")); if (i===hist.length) tr.classList.add("sel"); if (i===rows.length-1) tr.style.fontWeight="600"; if (i>hist.length && i<rows.length-1) tr.style.fontStyle="italic"; });
@@ -2544,14 +2558,37 @@ function renderAbq(){
     [L("AIE, Energy and AI (2025) : la consommation électrique des centres de données double d'ici 2030 (environ 945 TWh), celle des serveurs IA croît d'environ 30 % par an ; gains d'efficacité du matériel et des modèles (baisse de l'intensité i).","IEA, Energy and AI (2025): data-centre electricity use doubles by 2030 (about 945 TWh), AI servers grow about 30% a year; hardware and model efficiency gains (fall in intensity i)."),"https://www.iea.org/reports/energy-and-ai/executive-summary"],
     [L("GitHub Copilot : plus de 20 millions d'utilisateurs cumulés en juillet 2025 (TechCrunch) ; GitHub ne publie ni utilisateurs actifs ni volumes de tokens.","GitHub Copilot: over 20 million all-time users in July 2025 (TechCrunch); GitHub publishes neither active users nor token volumes."),"https://techcrunch.com/2025/07/30/github-copilot-crosses-20-million-all-time-users/"]];
   const ul=el("ul",{class:"small",style:"margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px"}); for (const [txt,url] of src){ const li=el("li"); li.append(txt+" "); li.append(el("a",{href:url,target:"_blank",rel:"noopener",text:L("Source","Source")})); ul.append(li); } p4.append(ul);
-  p4.append(el("p",{class:"small muted",style:"margin:0",text:L("Limites : la baisse de l'intensité par token est l'hypothèse la plus fragile (un modèle plus efficace par token peut en consommer davantage) ; les tokens de la base sont extrapolés au rythme du CO₂e ; la fourchette reportée ne couvre que l'incertitude de l'atterrissage, pas celle de la croissance : l'écart entre abaques la donne.","Limits: the fall in intensity per token is the most fragile assumption (a model more efficient per token may use more of them); base-year tokens are extrapolated at the CO₂e pace; the carried-over range only covers the landing uncertainty, not growth uncertainty: the spread between scenarios gives that.")}));
+  p4.append(el("p",{class:"small muted",style:"margin:0",text:L("Limites : la baisse de l'intensité par token est l'hypothèse la plus fragile (un modèle plus efficace par token peut en consommer davantage) ; l'extrapolation de l'année de base suppose un rythme constant (ni croissance ni saisonnalité au-delà des mois de référence) ; la fourchette reportée ne couvre que l'incertitude de cette extrapolation, pas celle de la croissance : l'écart entre abaques la donne.","Limits: the fall in intensity per token is the most fragile assumption (a model more efficient per token may use more of them); the base-year extrapolation assumes a constant pace (no growth or seasonality beyond the reference months); the carried-over range only covers the uncertainty of that extrapolation, not growth uncertainty: the spread between scenarios gives that.")}));
   box.append(p4);
+}
+// Règle d'extrapolation de l'année de base, détail mois par mois
+function abqExtPanel(base){
+  const p=el("section",{class:"panel"}); const hd=el("div",{class:"panel-head"});
+  const mName=m=>new Date(Date.UTC(+m.slice(0,4),+m.slice(5,7)-1,1)).toLocaleDateString(LANG==="fr"?"fr-FR":"en-GB",{month:"long",timeZone:"UTC"});
+  const refTxt=base.ref.map(q=>mName(q.m)).join(", ");
+  hd.append(el("div",{class:"t"}, el("h3",{text:L(`Extrapolation de l'année ${base.Y}`,`${base.Y} extrapolation`)}), el("p",{class:"small muted",text:L(`L'export ne couvre pas toute l'année ${base.Y} : ${base.miss} jours sur ${sum(base.months,q=>q.n)} n'ont pas de donnée. Ils sont estimés pour que les abaques partent d'une année complète.`,`The export does not cover the whole of ${base.Y}: ${base.miss} days out of ${sum(base.months,q=>q.n)} have no data. They are estimated so that the scenarios start from a full year.`)})));
+  const sl=el("label",{class:"field",style:"min-width:220px"}); sl.append(el("span",{text:L("Mois de référence","Reference months")})); const se=el("select");
+  se.append(el("option",{value:"tous",text:L("Tous les mois complets","All complete months")}), el("option",{value:"3m",text:L("Les 3 derniers mois complets","The last 3 complete months")})); se.value=base.ext;
+  se.addEventListener("change",()=>{ P.abq=P.abq||{}; P.abq.ext=se.value; saveParams(); renderAbq(); }); sl.append(se); hd.append(sl); p.append(hd);
+  const rule=L(`Règle retenue : les jours couverts par l'export gardent leur valeur mesurée. Chaque jour sans donnée (mois antérieurs au début de l'export, mois absents de l'export, jours après le ${frDate(base.last)} jusqu'au 31 décembre) reçoit le rythme journalier moyen des mois de référence, week-ends et jours fériés compris.`,
+    `Rule used: days covered by the export keep their measured value. Each day without data (months before the export starts, months missing from the export, days after ${frDate(base.last)} up to 31 December) gets the average daily pace of the reference months, weekends and public holidays included.`);
+  p.append(el("div",{class:"formula"}, el("b",{text:L(`CO₂e ${base.Y} = CO₂e mesuré + rythme × jours sans donnée`,`${base.Y} CO₂e = measured CO₂e + pace × days without data`)}), el("br"),
+    document.createTextNode(L(`= ${co2s(base.gYtd)} + ${co2s(base.rate)}/jour × ${base.miss} jours = ${co2s(base.g)}`,`= ${co2s(base.gYtd)} + ${co2s(base.rate)}/day × ${base.miss} days = ${co2s(base.g)}`))));
+  p.append(el("p",{class:"small ink2",style:"margin:0",text:rule+" "+(base.refComplete?L(`Mois de référence : ${refTxt} (${base.ref.length} mois complet${base.ref.length>1?"s":""}).`,`Reference months: ${refTxt} (${base.ref.length} complete month${base.ref.length>1?"s":""}).`):L(`Aucun mois complet dans l'export : le rythme est calculé sur les ${sum(base.ref,q=>q.obs)} jours couverts (${refTxt}).`,`No complete month in the export: the pace is computed on the ${sum(base.ref,q=>q.obs)} covered days (${refTxt}).`))+" "+L("Les tokens éq. output sont extrapolés de la même façon ; les utilisateurs sont ceux observés dans l'année.","Output-eq. tokens are extrapolated the same way; users are those seen during the year.")+" "+(base.band?L("Fourchette P10–P90 : 10e et 90e centiles des rythmes journaliers des mois de référence, appliqués aux jours sans donnée.","P10–P90 range: 10th and 90th percentiles of the reference months' daily paces, applied to the days without data."):L("Pas de fourchette : il faut au moins 3 mois de référence.","No range: at least 3 reference months are needed."))}));
+  const stName={complet:L("Mesuré (complet)","Measured (complete)"), partiel:L("Mesuré en partie","Partly measured"), manquant:L("Estimé","Estimated")};
+  const refSet=new Set(base.ref.map(q=>q.m));
+  const rows=base.months.map(q=>[mName(q.m)+(refSet.has(q.m)?" ●":""), stName[q.st], `${q.obs} / ${q.n}`, q.obs?co2s(q.g):"—", q.miss?co2s(q.eg):"—", co2s(q.g+q.eg)]);
+  rows.push([L("Année","Year"), "", `${sum(base.months,q=>q.obs)} / ${sum(base.months,q=>q.n)}`, co2s(base.gYtd), co2s(base.g-base.gYtd), co2s(base.g)]);
+  const t=table([L("Mois","Month"),L("Statut","Status"),L("Jours couverts","Days covered"),L("Mesuré","Measured"),L("Estimé","Estimated"),L("Retenu","Used")],[0,0,1,1,1,1],rows);
+  t.querySelectorAll("tbody tr").forEach((tr,i)=>{ tr.querySelectorAll("td").forEach((td,j)=>{ if (j>1) td.classList.add("num"); }); const q=base.months[i]; if (!q) tr.style.fontWeight="600"; else if (q.st==="manquant") tr.style.fontStyle="italic"; });
+  p.append(el("div",{class:"tbl-wrap"},t), el("p",{class:"small muted",style:"margin:0",text:L("● mois de référence du rythme. La vue Synthèse garde son propre atterrissage (méthode de projection de la vue Calcul, jours restants seulement).","● reference month for the pace. The Summary view keeps its own landing (projection method from the Calculation view, remaining days only).")}));
+  return p;
 }
 function exportAbq(base,S,sel){
   const fr=LANG==="fr", sep=fr?";":",", dec=v=>fr?String(v).replace(".",","):String(v); const keys=Object.keys(S);
   const lines=[["annee","statut","abaque","u_pct","t_pct","i_pct","utilisateurs","tokens_eq_output","gCO2e_par_Mtokens","CO2e_kg"].join(sep)];
   for (const h of base.hist) lines.push([h.y, h.partial?"reel_incomplet":"reel","","","","",h.U,Math.round(h.TO),h.TO?dec((h.g/h.TO*1e6).toFixed(3)):"",dec((h.g/1000).toFixed(3))].map(v=>csvEsc(v,sep)).join(sep));
-  lines.push([base.Y, base.landed?"atterrissage":"reel","","","","",base.U,Math.round(base.TO),base.TO?dec((base.g/base.TO*1e6).toFixed(3)):"",dec((base.g/1000).toFixed(3))].map(v=>csvEsc(v,sep)).join(sep));
+  lines.push([base.Y, base.landed?"extrapolee_12_mois":"reel","","","","",base.U,Math.round(base.TO),base.TO?dec((base.g/base.TO*1e6).toFixed(3)):"",dec((base.g/1000).toFixed(3))].map(v=>csvEsc(v,sep)).join(sep));
   for (const k of keys){ const R=abqRates(k); for (const q of S[k]){ const j=abqIdx(q.y); lines.push([q.y,"projection",`${k} ${ABQ_NAME(k)}`,dec(R.u[j]),dec(R.t[j]),dec(R.i[j]),Math.round(q.U),Math.round(q.TO),dec((q.I*1e6).toFixed(3)),dec((q.g/1000).toFixed(3))].map(v=>csvEsc(v,sep)).join(sep)); } }
   deliver("copilot-carbone-projections-2030.csv", lines.join("\n"), "text/csv");
 }
